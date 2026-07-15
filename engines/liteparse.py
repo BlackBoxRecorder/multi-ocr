@@ -1,5 +1,6 @@
 from pathlib import Path
 import tempfile
+from typing import Callable
 
 from liteparse import LiteParse as LiteParseLib
 
@@ -34,7 +35,12 @@ class LiteParseEngine(OCREngine):
         finally:
             tmp_pdf.unlink(missing_ok=True)
 
-    def parse_pdf(self, pdf_path: Path, pages: str | None = None) -> str:
+    def parse_pdf(
+        self,
+        pdf_path: Path,
+        pages: str | None = None,
+        progress_callback: Callable[[], None] | None = None,
+    ) -> str:
         """直接解析 PDF，返回 markdown 文本。
 
         Args:

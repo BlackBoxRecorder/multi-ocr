@@ -2,56 +2,72 @@
 
 ## 概述
 
-为 PDF OCR 处理增加 tqdm 进度条显示，让用户在逐页识别 API 调用期间能看到实时进度。同时移除以命令行输出为目的的 `--stdout` 参数，统一为文件输出。
+为 PDF/图片 OCR 处理增加 tqdm 进度条显示。单文件 PDF 显示逐页进度，批量 PDF 逐个文件显示各自页进度，批量图片合并显示一条总进度。同时将三个 API 引擎中重复的 `parse_pdf()` 逐页迭代逻辑提取到基类。
 
 ## 背景
 
-当前 `ocr_file()` 对 PDF 逐页调用 OCR API 时没有任何进度提示。对于多页 PDF，用户只能等待，无法知道进度。同时 `--stdout` 参数的存在使得输出路径分裂为两条逻辑分支，增加复杂度。
+当前 `ocr_file()` 对 PDF 逐页调用 OCR API 时没有任何进度提示。批量模式仅有文件级 tqdm，不显示页级进度。三个引擎（SiliconFlow / DashScope / Ollama）各自实现了完全相同的 `parse_pdf()` 逐页迭代逻辑。
+
+## 各模式进度行为
+
+| 模式 | 进度条 | 示例 |
+|------|--------|------|
+| 单文件 PDF | 逐页 | `识别 report.pdf: 50%\|█████▌ \| 5/10 [00:25<00:25]` |
+| 单文件图片 | 无（单张瞬间完成） | — |
+| 批量 PDF | 逐个文件，各自显示页进度 | `识别 a.pdf: 100%\|████\| 5/5` → `识别 b.pdf: 60%\|██▌ \| 6/10` |
+| 批量图片 | 所有图片合并一条 | `识别 dir_name: 60%\|██▌ \| 3/5 [00:15<00:10]` |
+
+关键原则：不需要预扫描，打开文件时获取页数即创建 tqdm。批量 PDF 下，前一个文件完成后 bar 自然消失，下一个文件 bar 出现。
 
 ## 改动范围
 
-### 1. `ocr.py` — 核心改动
+### 1. `engines/base.py` — 基类提供默认 parse_pdf 实现
 
-- 移除 `stdout` 参数，`ocr_file()` 签名简化为 `ocr_file(input_path, engine, pages=None) -> str`
-- 始终将结果写入 `{input_path.stem}.txt`，移除 `print(merged)` 分支
-- 在逐页 OCR 循环中引入 tqdm：
+- `parse_pdf` 从 `@abstractmethod` 改为普通方法，提供默认逐页实现
+- 新增 `progress_callback: Callable[[], None] | None = None` 参数
+- 新增 `from typing import Callable`、`import shutil`、`from pdf_utils import split_pdf`
+- 方法体：`split_pdf()` → 逐页 `parse_image()` → 每页调用 `progress_callback()` → 合并结果
 
-```python
-from tqdm import tqdm
+### 2. `engines/siliconflow.py` / `dashscope.py` / `ollama.py` — 删除重复代码
 
-for i, img_path in enumerate(tqdm(images, file=sys.stderr, desc=f"识别 {input_path.name}")):
-    text = engine.recognize(img_path)
-    ...
-```
+- 删除各自的 `parse_pdf()` 方法（每个约 12 行）
+- 删除不再需要的 `import shutil` 和 `from pdf_utils import split_pdf`
+- 其余代码不变，继承基类默认实现
 
-进度条输出到 stderr，格式示例：`识别 input.pdf:  50%|█████     | 5/10 [00:25<00:25, 5.00s/it]`
+### 3. `engines/liteparse.py` — 签名兼容
 
-### 2. `main.py` — 移除 --stdout
+- `parse_pdf()` 签名加上 `progress_callback=None` 参数，方法体不变
+- LiteParse 原生调用不支持逐页回调，进度条在调用完成后一次性更新
 
-- 删除 `--stdout` argparse 参数定义
-- 调用处移除 `stdout=args.stdout` 参数
+### 4. `single.py` — ocr_file 负责创建进度条
 
-### 3. `pyproject.toml` — 新增依赖
+- PDF 处理：用 `fitz.open()` 获取页数（考虑 `--pages` 过滤后的实际页数），创建 tqdm，通过 `progress_callback` 传给 `engine.parse_pdf()`
+- 图片处理：无进度条（单张瞬间完成）
+- tqdm desc 格式：`识别 {文件名}`
 
-添加 `tqdm` 包。
+### 5. `batch.py` — 简化，委托给 ocr_file
 
-### 4. `tests/test_ocr.py` — 测试更新
+- `_batch_pdfs()`：移除 tqdm 包装，直接循环调用 `ocr_file()`，让 `ocr_file()` 自己管理进度条
+- `_batch_images()`：保持现有 tqdm 用法，desc 为 `识别 {目录名}`
 
-- 所有测试中 `ocr_file(..., stdout=True)` 改为 `ocr_file(...)` 
-- `test_save_to_file` 移除 `unlink` 清理逻辑，因为默认行为就是保存文件
+### 6. `main.py` — 无改动
 
 ## 非改动范围
 
 - `pdf_utils.py` 不增加进度条（PDF 渲染通常很快，不是瓶颈）
-- `engines/` 目录不做任何改动
-- 不引入回调/事件等解耦机制（YAGNI — 当前只有 CLI 一个调用方）
+- `main.py` 不引入新 CLI 参数
+- `pyproject.toml` 不新增依赖（tqdm 已在 `batch.py` 中使用，说明已安装）
 
-## 错误处理
+## 边界情况
 
-进度条本身不引入新的错误场景。OCR 识别异常时，异常会中断 tqdm 迭代器但不影响异常传播。
+- `--pages` 过滤：`ocr_file()` 需解析页码范围以获取实际处理页数，用于 tqdm 的 total 值
+- LiteParse PDF：无逐页回调，进度条在 `parse_pdf` 返回后一次性 `update(total)`，表现为瞬间完成
+- PDF 0 页：`fitz.open()` 返回 page_count=0，不创建进度条，直接返回空结果
+- 异常中断：tqdm 随函数异常传播自然结束，无需手动 close（但建议加 try/finally 确保 close）
 
-## 依赖变更
+## 依赖
 
 | 操作 | 包 | 用途 |
 |------|-----|------|
-| 新增 | `tqdm` | 终端进度条显示 |
+| 已有 | `tqdm` | 终端进度条（`batch.py` 已使用） |
+| 已有 | `fitz` (pymupdf) | 获取 PDF 页数（`pdf_utils.py` 已使用） |

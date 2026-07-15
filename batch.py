@@ -65,7 +65,7 @@ def _batch_pdfs(pdfs: list[Path], engine: OCREngine) -> None:
         pdfs: 已排序的 PDF 文件路径列表。
         engine: OCR 引擎实例。
     """
-    for pdf_path in tqdm(pdfs, desc="处理 PDF", file=sys.stderr):
+    for pdf_path in pdfs:
         ocr_file(input_path=pdf_path, engine=engine, pages=None)
 
 

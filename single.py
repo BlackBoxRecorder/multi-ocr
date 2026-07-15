@@ -1,6 +1,11 @@
+import sys
 from pathlib import Path
 
+import fitz
+from tqdm import tqdm
+
 from engines.base import OCREngine
+from pdf_utils import parse_pages
 
 # 支持的图片格式
 _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
@@ -37,7 +42,36 @@ def ocr_file(
         raise FileNotFoundError(f"文件不存在: {input_path}")
 
     if _is_pdf(input_path):
-        merged = engine.parse_pdf(input_path, pages)
+        # 获取实际要处理的页数
+        doc = fitz.open(input_path)
+        total_pages = doc.page_count
+        doc.close()
+
+        if pages:
+            page_indices = parse_pages(pages, total_pages)
+            actual_total = len(page_indices)
+        else:
+            actual_total = total_pages
+
+        if actual_total == 0:
+            merged = ""
+        else:
+            pbar = tqdm(
+                total=actual_total,
+                desc=f"识别 {input_path.name}",
+                file=sys.stderr,
+                unit="页",
+            )
+            try:
+                merged = engine.parse_pdf(
+                    input_path,
+                    pages,
+                    progress_callback=lambda: pbar.update(1),
+                )
+                # 确保进度条到达 100%（兼容 LiteParse 等无逐页回调的引擎）
+                pbar.update(pbar.total - pbar.n)
+            finally:
+                pbar.close()
     elif _is_image(input_path):
         if pages:
             raise ValueError("图片不支持 --pages 页码范围，该参数仅对 PDF 有效")

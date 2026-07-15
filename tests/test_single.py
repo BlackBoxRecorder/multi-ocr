@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+from typing import Callable
+
 import pytest
 
 from engines.base import OCREngine
@@ -17,7 +19,12 @@ class MockParsePdfEngine(OCREngine):
     def parse_image(self, image_path: Path) -> str:
         raise NotImplementedError("仅支持 PDF")
 
-    def parse_pdf(self, pdf_path: Path, pages: str | None = None) -> str:
+    def parse_pdf(
+        self,
+        pdf_path: Path,
+        pages: str | None = None,
+        progress_callback: Callable[[], None] | None = None,
+    ) -> str:
         result = f"parsed: {pdf_path.name}"
         if pages:
             result += f" pages={pages}"
