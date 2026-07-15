@@ -41,7 +41,16 @@ def ocr_file(
     if not input_path.exists():
         raise FileNotFoundError(f"文件不存在: {input_path}")
 
+    # PDF 优先尝试引擎原生解析
     if _is_pdf(input_path):
+        try:
+            merged = engine.parse_pdf(input_path, pages)
+            output_path = input_path.with_suffix(".md")
+            output_path.write_text(merged, encoding="utf-8")
+            print(f"已保存: {output_path}")
+            return merged
+        except NotImplementedError:
+            pass  # 引擎不支持直接解析，回退到图片流程
         images, page_labels = _prepare_pdf(input_path, pages)
     elif _is_image(input_path):
         images, page_labels = [input_path], [None]
@@ -72,7 +81,7 @@ def ocr_file(
     merged = "\n\n".join(results)
 
     # 输出
-    output_path = input_path.with_suffix(".txt")
+    output_path = input_path.with_suffix(".md")
     output_path.write_text(merged, encoding="utf-8")
     print(f"已保存: {output_path}")
 

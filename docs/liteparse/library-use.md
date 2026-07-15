@@ -1,0 +1,439 @@
+---
+title: Library Usage | Developer Documentation
+description: Use LiteParse programmatically from TypeScript or Python.
+---
+
+LiteParse can be used as a library in your own code, not just from the CLI. There are native packages for both TypeScript and Python.
+
+- [TypeScript](#tab-panel-15)
+- [Python](#tab-panel-16)
+- [Rust](#tab-panel-17)
+- [Browser (WASM)](#tab-panel-18)
+
+## TypeScript / Node.js usage
+
+Install as a project dependency:
+
+Terminal window
+
+```
+npm install @llamaindex/liteparse
+# or
+pnpm add @llamaindex/liteparse
+```
+
+### Parsing a document
+
+```
+import { LiteParse } from "@llamaindex/liteparse";
+
+
+const parser = new LiteParse({ ocrEnabled: true });
+const result = await parser.parse("document.pdf");
+
+
+// Full document text with layout preserved
+console.log(result.text);
+
+
+// Per-page data
+for (const page of result.pages) {
+  console.log(`Page ${page.pageNum}: ${page.textItems.length} text items`);
+}
+```
+
+### JSON output with bounding boxes
+
+Text items include spatial coordinates (`x`, `y`, `width`, `height`) in PDF points:
+
+```
+const parser = new LiteParse({ outputFormat: "json" });
+const result = await parser.parse("document.pdf");
+
+
+for (const page of result.pages) {
+  for (const item of page.textItems) {
+    console.log(`[${item.x}, ${item.y}] ${item.width}×${item.height} "${item.text}"`);
+  }
+}
+```
+
+### Markdown output
+
+Render the document to Markdown — headings, tables, lists, images, and links. The rendered Markdown comes back on `result.text`:
+
+```
+const parser = new LiteParse({
+  outputFormat: "markdown",   // "json" | "text" | "markdown"
+  imageMode: "placeholder",   // "placeholder" | "off" | "embed"
+  extractLinks: true,         // render [text](url) link syntax (default: true)
+});
+const result = await parser.parse("document.pdf");
+console.log(result.text); // rendered Markdown
+```
+
+### Configuration
+
+Pass any config options to the constructor. You only need to specify what you want to override:
+
+```
+const parser = new LiteParse({
+  ocrEnabled: true,
+  ocrServerUrl: "http://localhost:8828/ocr",
+  ocrLanguage: "fra",
+  dpi: 300,
+  outputFormat: "json",
+  targetPages: "1-10",
+  password: "secret",
+});
+```
+
+### Buffer / Uint8Array input
+
+You can pass raw bytes directly instead of a file path:
+
+```
+import { readFile } from "fs/promises";
+
+
+const parser = new LiteParse();
+
+
+// From a file read
+const pdfBytes = await readFile("document.pdf");
+const result = await parser.parse(pdfBytes);
+
+
+// From an HTTP response
+const response = await fetch("https://example.com/document.pdf");
+const buffer = Buffer.from(await response.arrayBuffer());
+const result2 = await parser.parse(buffer);
+```
+
+### Screenshots
+
+Generate page images as buffers — useful for sending to LLMs or saving to disk:
+
+```
+const parser = new LiteParse();
+const screenshots = parser.screenshot("document.pdf");
+
+
+for (const shot of screenshots) {
+  console.log(`Page ${shot.pageNum}: ${shot.width}x${shot.height}`);
+  // shot.imageBuffer contains the raw PNG data
+}
+
+
+// Screenshot specific pages
+const shots = parser.screenshot("document.pdf", [1, 2, 3]);
+```
+
+### Environment variables
+
+| Variable          | Description                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TESSDATA_PREFIX` | Path to a directory containing Tesseract `.traineddata` files. For offline/air-gapped environments. Also available as the `tessdataPath` config option. |
+
+## Python usage
+
+Install the package from PyPI:
+
+Terminal window
+
+```
+pip install liteparse
+```
+
+### Parsing a document
+
+```
+from liteparse import LiteParse
+
+
+parser = LiteParse()
+result = parser.parse("document.pdf")
+
+
+# Full document text
+print(result.text)
+
+
+# Per-page data
+for page in result.pages:
+    print(f"Page {page.page_num}: {len(page.text_items)} text items")
+```
+
+### Configuration
+
+All options are passed to the constructor:
+
+```
+parser = LiteParse(
+    ocr_enabled=True,
+    ocr_server_url="http://localhost:8828/ocr",
+    ocr_language="fra",
+    dpi=300,
+    target_pages="1-5",
+    password="secret",
+)
+result = parser.parse("document.pdf")
+```
+
+### Markdown output
+
+Render the document to Markdown — headings, tables, lists, images, and links. The rendered Markdown comes back on `result.text`:
+
+```
+parser = LiteParse(
+    output_format="markdown",   # "json" | "text" | "markdown"
+    image_mode="placeholder",   # "placeholder" | "off" | "embed"
+    extract_links=True,         # render [text](url) link syntax (default: True)
+)
+result = parser.parse("document.pdf")
+print(result.text)  # rendered Markdown
+```
+
+### Parsing from bytes
+
+If you already have file contents in memory (e.g. from a web upload), pass them directly to `parse()`:
+
+```
+with open("document.pdf", "rb") as f:
+    pdf_bytes = f.read()
+
+
+result = parser.parse(pdf_bytes)
+print(result.text)
+```
+
+### Screenshots
+
+```
+screenshots = parser.screenshot("document.pdf", page_numbers=[1, 2, 3])
+for s in screenshots:
+    print(f"Page {s.page_num}: {s.width}x{s.height}")
+    # s.image_bytes contains PNG data
+```
+
+### Environment variables
+
+| Variable          | Description                                                                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TESSDATA_PREFIX` | Path to a directory containing Tesseract `.traineddata` files. For offline/air-gapped environments. Also available as the `tessdata_path` constructor option. |
+
+## Rust usage
+
+Add `liteparse` to your `Cargo.toml`:
+
+```
+[dependencies]
+liteparse = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+```
+
+### Parsing a document
+
+```
+use liteparse::{LiteParse, LiteParseConfig};
+
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let parser = LiteParse::new(LiteParseConfig::default());
+    let result = parser.parse("document.pdf").await?;
+
+
+    // Full document text
+    println!("{}", result.text);
+
+
+    // Per-page data
+    for page in &result.pages {
+        println!("Page {}: {} text items", page.page_number, page.text_items.len());
+    }
+    Ok(())
+}
+```
+
+### Parsing from bytes
+
+Use `PdfInput::Bytes` when you have the PDF in memory:
+
+```
+use liteparse::{LiteParse, LiteParseConfig};
+use liteparse::types::PdfInput;
+
+
+let parser = LiteParse::new(LiteParseConfig::default());
+let pdf_bytes = std::fs::read("document.pdf")?;
+let result = parser.parse_input(PdfInput::Bytes(pdf_bytes)).await?;
+```
+
+### Configuration
+
+Override only the fields you need:
+
+```
+use liteparse::{LiteParse, LiteParseConfig, OutputFormat};
+
+
+let config = LiteParseConfig {
+    ocr_enabled: true,
+    ocr_language: "fra".to_string(),
+    dpi: 300.0,
+    target_pages: Some("1-10".to_string()),
+    output_format: OutputFormat::Json,
+    password: Some("secret".to_string()),
+    ..Default::default()
+};
+let parser = LiteParse::new(config);
+```
+
+### Markdown output
+
+Render the document to Markdown — headings, tables, lists, images, and links. The rendered Markdown comes back on `result.text`:
+
+```
+use liteparse::config::{ImageMode, LiteParseConfig, OutputFormat};
+use liteparse::LiteParse;
+
+
+let config = LiteParseConfig {
+    output_format: OutputFormat::Markdown,
+    image_mode: ImageMode::Placeholder,
+    extract_links: true,
+    ..Default::default()
+};
+let result = LiteParse::new(config).parse("document.pdf").await?;
+println!("{}", result.text); // rendered Markdown
+```
+
+### Screenshots
+
+Generate page images as PNG bytes:
+
+```
+let parser = LiteParse::new(LiteParseConfig::default());
+let screenshots = parser.screenshot("document.pdf", None).await?;
+
+
+for shot in &screenshots {
+    println!("Page {}: {}x{}", shot.page_num, shot.width, shot.height);
+    // shot.image_bytes contains the raw PNG data
+}
+
+
+// Screenshot specific pages
+let shots = parser.screenshot("document.pdf", Some(vec![1, 2, 3])).await?;
+```
+
+### Custom OCR engine
+
+Implement the `OcrEngine` trait to plug in your own OCR backend:
+
+```
+use liteparse::LiteParse;
+use liteparse::ocr::OcrEngine;
+use std::sync::Arc;
+
+
+let parser = LiteParse::new(Default::default())
+    .with_ocr_engine(Arc::new(my_engine));
+```
+
+### Features
+
+| Feature     | Default | Description                                                                                                            |
+| ----------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `tesseract` | Yes     | Built-in Tesseract OCR via `tesseract-rs`. Disable with `default-features = false` if you only use HTTP OCR or no OCR. |
+
+## Browser (WASM) usage
+
+Install the WASM package:
+
+Terminal window
+
+```
+npm install @llamaindex/liteparse-wasm
+```
+
+### Parsing a document
+
+```
+import init, { LiteParse } from "@llamaindex/liteparse-wasm";
+
+
+// Initialize the WASM module (required once before use)
+await init();
+
+
+const parser = new LiteParse({ ocrEnabled: false });
+
+
+// Pass a Uint8Array (e.g. from fetch, File input, or drag-drop)
+const bytes = new Uint8Array(await file.arrayBuffer());
+const result = await parser.parse(bytes);
+
+
+console.log(result.text);          // full document text
+console.log(result.pages[0]);      // per-page items with bboxes
+```
+
+### Configuration
+
+All options are optional and use camelCase:
+
+```
+const parser = new LiteParse({
+  ocrEnabled: true,
+  ocrLanguage: "fra",
+  dpi: 300,
+  outputFormat: "json",
+  targetPages: "1-10",
+  maxPages: 100,
+  password: "secret",
+  quiet: false,
+});
+```
+
+### Markdown output
+
+The browser build supports Markdown output too — set `outputFormat: "markdown"` and read the rendered Markdown from `result.text`. See the [Markdown output guide](/liteparse/guides/markdown/index.md) for the `imageMode` and `extractLinks` options.
+
+```
+const parser = new LiteParse({ outputFormat: "markdown" });
+const result = await parser.parse(bytes);
+console.log(result.text); // rendered Markdown
+```
+
+### OCR in the browser
+
+The native Tesseract and HTTP OCR backends are not available in the browser. To use OCR, provide a JS-side engine with a `recognize` method:
+
+```
+const parser = new LiteParse({
+  ocrEnabled: true,
+  ocrLanguage: "eng",
+  ocrEngine: {
+    /**
+     * @param imageData - PNG-encoded image bytes
+     * @param width     - rendered page width in pixels
+     * @param height    - rendered page height in pixels
+     * @param language  - e.g. "eng"
+     * @returns array of recognized text regions
+     */
+    async recognize(imageData, width, height, language) {
+      // e.g. call tesseract.js in a worker, or a remote OCR service
+      return [
+        { text: "Hello", bbox: [10, 20, 80, 40], confidence: 0.98 },
+      ];
+    },
+  },
+});
+```
+
+### Notes
+
+- Input must be a `Uint8Array` — file paths are not supported in the browser.
+- The WASM module must be initialized with `await init()` before creating a `LiteParse` instance.

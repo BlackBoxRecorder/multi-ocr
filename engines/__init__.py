@@ -2,12 +2,23 @@ from engines.base import OCREngine
 from engines.dashscope import DashScopeEngine
 from engines.siliconflow import SiliconFlowEngine
 
+# LiteParse 为可选依赖，仅在已安装时注册
+try:
+    from engines.liteparse import LiteParseEngine
+
+    _HAS_LITEPARSE = True
+except ImportError:
+    _HAS_LITEPARSE = False
+
 # 引擎注册表：provider 名 -> Engine 类
 # 添加新提供商时只需在此注册
 _registry: dict[str, type[OCREngine]] = {
     "dashscope": DashScopeEngine,
     "siliconflow": SiliconFlowEngine,
 }
+
+if _HAS_LITEPARSE:
+    _registry["liteparse"] = LiteParseEngine
 
 
 def get_engine(provider: str, model: str, api_key: str) -> OCREngine:

@@ -2,7 +2,7 @@
 
 import pytest
 
-from engines import get_engine
+from engines import _HAS_LITEPARSE, get_engine
 
 
 class TestGetEngine:
@@ -29,3 +29,12 @@ class TestGetEngine:
     def test_unknown_provider(self) -> None:
         with pytest.raises(ValueError, match="未知的 OCR 提供商"):
             get_engine(provider="nonexistent", model="m", api_key="k")
+
+    @pytest.mark.skipif(not _HAS_LITEPARSE, reason="liteparse 未安装")
+    def test_known_provider_liteparse(self) -> None:
+        engine = get_engine(provider="liteparse", model="", api_key="")
+        from engines.liteparse import LiteParseEngine
+
+        assert isinstance(engine, LiteParseEngine)
+        assert engine._model == ""
+        assert engine._api_key == ""

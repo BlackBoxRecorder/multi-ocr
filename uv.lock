@@ -193,10 +193,51 @@ wheels = [
 ]
 
 [[package]]
+name = "liteparse"
+version = "2.5.1"
+source = { registry = "https://mirrors.pku.edu.cn/pypi/web/simple" }
+sdist = { url = "https://mirrors.pku.edu.cn/pypi/web/packages/c0/d7/cfa519097042d9dc36a8eb19680db8d02fa37d4b7bbef2bebb7a6bc7fb4a/liteparse-2.5.1.tar.gz", hash = "sha256:e6d27f135d048814ae8b265b616e2f65a1b93449a6e199a647e4a3753347471c" }
+wheels = [
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/dd/1c/3de0b3e4242081375bf110a2487ab340976598a335967f6c520402cee76b/liteparse-2.5.1-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:a85d84e67583a9660672eccf00fc050c4767567db73151907302c0f35674c544" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/82/79/2ee50cc4d3f908391adf47da73579d77d8c8b092e88fcbfb23d203945dc6/liteparse-2.5.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:356c29cccc4d42007678adbda68a6e61f4c88d3092cfdf0f879f679ddf2c01e5" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/99/bf/225f9332616d8becdfe1d5335ee4c31ca28d89ad11b624c52273d815359e/liteparse-2.5.1-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:4f740de652041c64e320e33e92296880ed25661cb8f4fdbf0ed8994e62403a49" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/de/c7/2e1bf6e1f9f8d37692e81b69930d4c610876582dd0413e3a7197b672340c/liteparse-2.5.1-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:3c87df56ea0f2badebf850266b39b454f07f89fa7c0836d723f90419970ce1d8" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/f0/3f/91e9dfe4d94f27d4bdf53e9e368ce6096ab2ff1df05e4607ae8dc5d34e48/liteparse-2.5.1-cp311-cp311-win_amd64.whl", hash = "sha256:371749701d2db2c5e1389949a9aaaf6e9fd761fe3f124c4782a016f88e1ee6ac" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/e3/d6/a2af871e28e51c0af84b81979199479c061f88369fb2979466f2acc31a64/liteparse-2.5.1-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:99722051af1076e95be11749b54c1d18f62ddc1a125f0826df8bbed55164f41e" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/20/87/bf9123f740a566cdc6d1ad136e33e30ef68d82245b0e8f2d07084c6eab18/liteparse-2.5.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:a8f627af7a20eea4490d98616bbfa4795e1e5f0b863db2722ad1a671ec7ef046" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/0a/5c/a808a1776f343571b4cd29fabb730732610ad1f02e51483d691dccdd6cff/liteparse-2.5.1-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:6a693dba11306428cb71b446844f9ab011a71a4205d346ae5549a0ac31333145" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/0c/8e/e86f7f39db4f3e17c0c739ea97f2e884b738f8701ed3c50b8ae8e227b1e8/liteparse-2.5.1-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:c1f989cf85fae2f84941190a933abe43542d92cdcea8138a57623c27a0715ade" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/b5/e4/6ba53d76c14edcd892f51792c3c98ed8efdc5563645513bb2bd160c3b562/liteparse-2.5.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:ce477cdd4e5bf0c0efb4f52669016dda5109bce618b55dada627cec2a36db347" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/ff/1b/8b863f15dd166ed27567d49a0e84623ae247293a6a65974e128ff34fcc7c/liteparse-2.5.1-cp312-cp312-win_amd64.whl", hash = "sha256:38b1250818f8d958c2c1a7b3f8c2acfc31483a2fd41d99ba98cd59611fb3daf1" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/2d/fc/2bc56578fada92ea6849c5cdd0897168606416408ca39978e9143870270d/liteparse-2.5.1-cp312-cp312-win_arm64.whl", hash = "sha256:ec6ef90cb08a233d0989a57e5483bae09f31fc715794215730c44c0af785eb93" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/81/d6/0eb6b03bc923fa8f3786bd89022c3336b5afc5b61475c3539c6229a0812b/liteparse-2.5.1-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:953b1876128da9f0698a844c31345b913fa2e7b46b3e0a115ac908855df59781" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/62/bc/f706d25850fb4c55dd99a35d2542006827a159dcb2c22488fd7ff66da1a0/liteparse-2.5.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:6e793f3b5684b7db42a2b727ef00afc6510326b1f5b25603757cc71dcaf32788" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/6e/5f/db02af2c9e89fe88d67055d4b31776bae17dabf089fce7635dd0acb939ea/liteparse-2.5.1-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:4ef53f95d493d81673bebe957007f7afb65b237e2f52681338b45cc2081de980" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/5b/24/a670b024b0327b560fe2c5708a3f483c67d0c29705bf2876024723b4f832/liteparse-2.5.1-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:692653b2c83e8d34e94364c46f3743273f84b436f97ed6f5fe676f2cf2b0665e" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/35/a3/783e8a7df7e9b9030f70b2d0144dc03c7fba10b3fda79d860dc6fb6d44d3/liteparse-2.5.1-cp313-cp313-win_amd64.whl", hash = "sha256:de2ade3fcc3790dca5bd9ef0e393e3149d161d8e3aa0d56b1dbed9c796822500" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/94/b9/8ccd400bb7324024e8b0dd5c87b27ebf35c7322c0311c61cbe7dbf040b92/liteparse-2.5.1-cp313-cp313-win_arm64.whl", hash = "sha256:34aff1a9c5f30c1bce4d14a67aa7454abb745eda24a69f746759e85b2480b5b0" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/69/ed/119d4a892ebf84bc0abc9a1ba93f36d7229bd79dc0367c5f62aee8c809c1/liteparse-2.5.1-cp314-cp314-macosx_10_12_x86_64.whl", hash = "sha256:cdd391793a78f0555d60ccbc709404d470db4d5c5838c1b0c167a2bf2528535b" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/68/1f/f81004ea779b1599e5fc89a38151a530963c7a371b7070c682d3aaa06101/liteparse-2.5.1-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:5fc1722b058b6db9f95edc921c60e1bb3272ff61397a2a8e226d83714674f90f" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/6a/a1/1de55c8807c13ed7e5842ef531bbd4f66757e374a2029a952c47dbc2cd36/liteparse-2.5.1-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:fe842ab5fd21b8fa7dc76e77a0b9a16da85e57fbe7f52591af5df3d8f92bdbb8" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/21/46/d62132126a1c335e6da133e0351069187f47169d6f27b3f17365085382b5/liteparse-2.5.1-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:b932c5d5ecbd0cd9288283dae8ffc7240d0935c4e7691b014f126de8e0887a9b" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/30/53/7841bd4ec39fd2dfe50fa5b988557da7b5e7b7a89ee3ee3334838086aa83/liteparse-2.5.1-cp314-cp314-win_amd64.whl", hash = "sha256:2d011b6f5f5328febcebf8fcc4a2a564ba6994aa1a64088daf9f7ffa5e10e487" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/08/89/95de081d4328dae7f4e78c566be1b1202b39b6c204ee25f7e1e0b6d6dd24/liteparse-2.5.1-cp314-cp314-win_arm64.whl", hash = "sha256:da4f134e5afff027964a0cf6190df017fa8786be1f642ba4a9c978fd6a233b86" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/c5/36/5409a854d143e474eb69204918512ff78649c3e88ad4424419ee595c03df/liteparse-2.5.1-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:c849029273b22326bbc0bf0c8d8373bcdebe9997838b455aa1f416aee32e7c2d" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/4b/61/7de44a8b501600c38f9193bb476c196ab2f2002d8982f435b751c3b0d550/liteparse-2.5.1-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:0121e973568d00e8cb84694f878e1bbffae0c4f84645646e049d2ecd0d306b1d" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/c7/0c/266b0e077e2167a0d4812d9b7047216733f7c01179e4ae0dc019018e034f/liteparse-2.5.1-cp315-cp315-manylinux_2_28_aarch64.whl", hash = "sha256:0a4027b8f2c5a9bad92a36614469cf67e8890358c63e3941fee6dd77c0645e84" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/b3/d6/af726e49a5c7fc11c1d1df8200e8c7c6f4e9c289cb9d0c5f382a902c5308/liteparse-2.5.1-cp315-cp315-manylinux_2_28_x86_64.whl", hash = "sha256:adfa48d437d96cbef60e3e39a31de003b530439b7f37d4c736a50450cc625ad3" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/74/f1/48cf38504a44258ef0d710d2fa79748051ba28285294559985376f74f820/liteparse-2.5.1-cp315-cp315t-manylinux_2_28_aarch64.whl", hash = "sha256:8a7737ccc2aadc4259d0ea1bbe0cbb577591f30396ccf654678f76b1664e4d6b" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/2d/4e/eacb088305fc4ff1f77d751e0085313e4ab9b95dbca2760a6975fe8199e7/liteparse-2.5.1-cp315-cp315t-manylinux_2_28_x86_64.whl", hash = "sha256:877d0c900ac4e01b9ae81984aa5738eff1a5a2c1334fcd209958a7f3a32ca221" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/12/11/36f31df49d4c051f596052d83503245a652a93b30fe519b2eebc45cffc85/liteparse-2.5.1-pp311-pypy311_pp73-manylinux_2_28_aarch64.whl", hash = "sha256:0b56d8899a25922a713d10cefaf37fc9bf10f8a6842861beab87048041db7fa6" },
+    { url = "https://mirrors.pku.edu.cn/pypi/web/packages/dc/38/04eac495d5a95e736decc97bc6e4b6a4df1836b337ff999b3284d7fe426f/liteparse-2.5.1-pp311-pypy311_pp73-manylinux_2_28_x86_64.whl", hash = "sha256:f282063b6b25fdcfc5e76cb47de5590374d37253c75fd10ddb5456594ab79b88" },
+]
+
+[[package]]
 name = "multi-ocr"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "liteparse" },
     { name = "openai" },
     { name = "pymupdf" },
     { name = "tqdm" },
@@ -209,6 +250,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "liteparse" },
     { name = "openai", specifier = ">=2.45.0" },
     { name = "pymupdf", specifier = ">=1.28.0" },
     { name = "tqdm", specifier = ">=4.67.0" },

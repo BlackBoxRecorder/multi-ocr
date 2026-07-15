@@ -4,7 +4,24 @@ from pathlib import Path
 
 import pytest
 
+from engines.base import OCREngine
 from ocr import _is_image, _is_pdf, ocr_file
+
+
+class MockParsePdfEngine(OCREngine):
+    """模拟支持 parse_pdf 的引擎（如 LiteParse）。"""
+
+    def __init__(self) -> None:
+        pass
+
+    def recognize(self, image_path: Path) -> str:
+        raise NotImplementedError("仅支持 PDF")
+
+    def parse_pdf(self, pdf_path: Path, pages: str | None = None) -> str:
+        result = f"parsed: {pdf_path.name}"
+        if pages:
+            result += f" pages={pages}"
+        return result
 
 
 class TestFileTypeHelpers:
@@ -72,19 +89,31 @@ class TestOcrFile:
             ocr_file(input_path=bmp_file, engine=mock_engine)
 
     def test_save_to_file(self, jpg_path: Path, mock_engine) -> None:
-        """默认保存 .txt 文件。"""
-        expected_txt = jpg_path.with_suffix(".txt")
-        expected_txt.unlink(missing_ok=True)
+        """默认保存 .md 文件。"""
+        expected_md = jpg_path.with_suffix(".md")
+        expected_md.unlink(missing_ok=True)
 
         try:
             result = ocr_file(input_path=jpg_path, engine=mock_engine)
-            assert expected_txt.exists()
-            assert expected_txt.read_text(encoding="utf-8") == result
+            assert expected_md.exists()
+            assert expected_md.read_text(encoding="utf-8") == result
         finally:
-            expected_txt.unlink(missing_ok=True)
+            expected_md.unlink(missing_ok=True)
 
     def test_image_ocr_with_custom_engine(self, jpg_path: Path, custom_engine) -> None:
         """使用自定义引擎的识别。"""
         result = ocr_file(input_path=jpg_path, engine=custom_engine)
         assert "custom text" in result
         assert "1.jpg" in result
+
+    def test_pdf_with_parse_pdf_engine(self, pdf_path: Path) -> None:
+        """PDF + 支持 parse_pdf 的引擎 → 跳过拆页，直接解析。"""
+        engine = MockParsePdfEngine()
+        result = ocr_file(input_path=pdf_path, engine=engine)
+        assert "parsed: 2.pdf" in result
+
+    def test_pdf_with_parse_pdf_engine_and_pages(self, pdf_path: Path) -> None:
+        """PDF + parse_pdf 引擎 + 页码范围 → 透传 pages。"""
+        engine = MockParsePdfEngine()
+        result = ocr_file(input_path=pdf_path, engine=engine, pages="1-2")
+        assert "parsed: 2.pdf pages=1-2" in result
