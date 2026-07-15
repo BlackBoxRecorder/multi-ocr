@@ -72,7 +72,7 @@ def pdf_to_images(pdf_path: Path, pages: list[int] | None = None) -> list[Path]:
         if page_num < 0 or page_num >= total:
             continue
         page = doc[page_num]
-        pix = page.get_pixmap(dpi=150)
+        pix = page.get_pixmap(dpi=200)
         img_path = tmp_dir / f"page_{page_num + 1:04d}.png"
         pix.save(str(img_path))
         image_paths.append(img_path)

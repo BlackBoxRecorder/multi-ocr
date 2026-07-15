@@ -1,4 +1,5 @@
 import base64
+import re
 from pathlib import Path
 
 from openai import OpenAI
@@ -28,17 +29,18 @@ class SiliconFlowEngine(OCREngine):
 
         response = self._client.chat.completions.create(
             model=self._model,
+            temperature=0,
             messages=[
                 {
                     "role": "user",
                     "content": [
                         {
-                            "type": "text",
-                            "text": "请识别图片中的文字，只输出识别结果，不要额外解释。",
-                        },
-                        {
                             "type": "image_url",
                             "image_url": {"url": data_url},
+                        },
+                        {
+                            "type": "text",
+                            "text": "<image>\nFree OCR.",
                         },
                     ],
                 }
@@ -46,4 +48,9 @@ class SiliconFlowEngine(OCREngine):
         )
 
         content = response.choices[0].message.content
-        return content if content else ""
+        if not content:
+            return ""
+        # 清理模型可能输出的特殊标记
+        content = re.sub(r"<\|/?ref\|>", "", content)
+        content = re.sub(r"<\|/?det\|>", "", content)
+        return content.strip()
