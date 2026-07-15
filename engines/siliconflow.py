@@ -8,13 +8,31 @@ from engines.base import OCREngine
 
 
 class SiliconFlowEngine(OCREngine):
-    """SiliconFlow API OCR 引擎，兼容 OpenAI SDK。"""
+    """SiliconFlow API OCR 引擎，兼容 OpenAI SDK。
+
+    不同模型使用不同的提示词以达到最佳识别效果。
+    """
 
     BASE_URL = "https://api.siliconflow.cn/v1"
+
+    # 模型名称 -> 提示词映射（按前缀匹配）
+    _PROMPT_MAP: dict[str, str] = {
+        "deepseek-ai/DeepSeek-OCR": "<image>\nFree OCR. Output in markdown format.",
+        "PaddlePaddle/PaddleOCR-VL-1.5": "OCR this image and output in markdown format.",
+    }
+
+    _FALLBACK_PROMPT = "OCR this image and output in markdown format."
 
     def __init__(self, model: str, api_key: str) -> None:
         self._model = model
         self._client = OpenAI(api_key=api_key, base_url=self.BASE_URL)
+
+    def _get_prompt(self) -> str:
+        """根据模型名称匹配对应的提示词，未匹配则使用默认提示词。"""
+        for prefix, prompt in self._PROMPT_MAP.items():
+            if prefix in self._model:
+                return prompt
+        return self._FALLBACK_PROMPT
 
     def recognize(self, image_path: Path) -> str:
         with open(image_path, "rb") as f:
@@ -26,6 +44,8 @@ class SiliconFlowEngine(OCREngine):
         mime_type = mime_map.get(suffix, "image/png")
 
         data_url = f"data:{mime_type};base64,{image_data}"
+
+        prompt = self._get_prompt()
 
         response = self._client.chat.completions.create(
             model=self._model,
@@ -40,7 +60,7 @@ class SiliconFlowEngine(OCREngine):
                         },
                         {
                             "type": "text",
-                            "text": "<image>\nFree OCR.",
+                            "text": prompt,
                         },
                     ],
                 }
