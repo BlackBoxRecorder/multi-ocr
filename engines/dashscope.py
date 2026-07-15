@@ -28,9 +28,13 @@ class DashScopeEngine(OCREngine):
 
     _FALLBACK_PROMPT = "OCR this image and output in markdown format."
 
-    def __init__(self, model: str, api_key: str) -> None:
+    def __init__(self, model: str, api_key: str, base_url: str | None = None) -> None:
         self._model = model
-        self._client = OpenAI(api_key=api_key, base_url=self.BASE_URL)
+        self._client = OpenAI(
+            api_key=api_key,
+            base_url=base_url or self.BASE_URL,
+            timeout=120.0,
+        )
 
     def _get_prompt(self) -> str:
         """根据模型名称匹配对应的提示词，未匹配则使用默认提示词。"""

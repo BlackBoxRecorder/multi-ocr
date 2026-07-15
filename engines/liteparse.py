@@ -14,8 +14,13 @@ class LiteParseEngine(OCREngine):
     图片通过自动转换为 PDF 后解析来支持。
     """
 
-    def __init__(self, model: str = "", api_key: str = "") -> None:
-        # model 和 api_key 不使用，保留参数以兼容工厂函数签名
+    def __init__(
+        self,
+        model: str = "",
+        api_key: str = "",
+        base_url: str | None = None,
+    ) -> None:
+        # model / api_key / base_url 不使用，保留参数以兼容工厂函数签名
         self._model = model
         self._api_key = api_key
 

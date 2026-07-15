@@ -150,7 +150,7 @@ def main() -> None:
         )
         sys.exit(1)
 
-    # 获取 Ollama base_url
+    # 获取 Ollama base_url（仅 ollama 引擎使用）
     ollama_url = args.ollama_url or os.environ.get("OLLAMA_BASE_URL")
 
     # 获取引擎
@@ -159,7 +159,7 @@ def main() -> None:
             provider=provider,
             model=model_name,
             api_key=api_key,
-            base_url=ollama_url,
+            base_url=ollama_url if provider == "ollama" else None,
         )
     except ValueError as e:
         print(f"引擎初始化失败: {e}", file=sys.stderr)
