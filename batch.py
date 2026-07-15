@@ -83,29 +83,17 @@ def _batch_images(
 def _batch_pdfs(pdfs: list[Path], engine: OCREngine, concurrency: int = 1) -> None:
     """PDF 批量处理：逐文件调用 ocr_file()，各自输出 .md 文件。
 
+    每个 PDF 内部使用页面级并发（concurrency 传递给 ocr_file()）。
+
     Args:
         pdfs: 已排序的 PDF 文件路径列表。
         engine: OCR 引擎实例。
-        concurrency: 并发数，默认 1（串行）。
+        concurrency: 页面级并发数，默认 1（串行逐页）。
     """
-    if concurrency > 1:
-        with ThreadPoolExecutor(max_workers=concurrency) as executor:
-            futures = [
-                executor.submit(
-                    ocr_file, input_path=pdf_path, engine=engine, pages=None
-                )
-                for pdf_path in pdfs
-            ]
-            for future in tqdm(
-                as_completed(futures),
-                total=len(pdfs),
-                desc=f"处理 {len(pdfs)} 个 PDF",
-                file=sys.stderr,
-            ):
-                future.result()  # 重新抛出可能的异常
-    else:
-        for pdf_path in pdfs:
-            ocr_file(input_path=pdf_path, engine=engine, pages=None)
+    for pdf_path in pdfs:
+        ocr_file(
+            input_path=pdf_path, engine=engine, pages=None, concurrency=concurrency
+        )
 
 
 def ocr_directory(input_dir: Path, engine: OCREngine, concurrency: int = 1) -> None:
