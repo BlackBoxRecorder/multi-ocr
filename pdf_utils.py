@@ -1,3 +1,4 @@
+import sys
 import tempfile
 from pathlib import Path
 
@@ -111,3 +112,35 @@ def images_to_pdf(image_paths: list[Path], output_path: Path) -> Path:
         return output_path
     finally:
         pdf_doc.close()
+
+
+def split_pdf(pdf_path: Path, pages_str: str | None) -> tuple[list[Path], list[int]]:
+    """拆解 PDF：验证页数、解析页码范围、渲染为图片。
+
+    Args:
+        pdf_path: PDF 文件路径。
+        pages_str: 页码范围字符串（如 "1-3,5"），None 表示全部。
+
+    Returns:
+        (图片路径列表, 页码标签列表)，标签为 1-based 页码。
+
+    Raises:
+        ValueError: 页码范围无效或越界。
+    """
+    doc = fitz.open(pdf_path)
+    total = doc.page_count
+    doc.close()
+
+    if total == 0:
+        print("PDF 无内容。", file=sys.stderr)
+        sys.exit(1)
+
+    if pages_str:
+        page_indices = parse_pages(pages_str, total)
+    else:
+        page_indices = list(range(total))
+
+    images = pdf_to_images(pdf_path, page_indices)
+    labels = [i + 1 for i in page_indices]
+
+    return images, labels

@@ -6,7 +6,7 @@ class OCREngine(ABC):
     """OCR 引擎抽象基类。所有 OCR 引擎必须实现此接口。"""
 
     @abstractmethod
-    def recognize(self, image_path: Path) -> str:
+    def parse_image(self, image_path: Path) -> str:
         """对单张图片进行 OCR，返回 markdown 文本。
 
         Args:
@@ -17,10 +17,9 @@ class OCREngine(ABC):
         """
         ...
 
+    @abstractmethod
     def parse_pdf(self, pdf_path: Path, pages: str | None = None) -> str:
-        """直接解析 PDF，返回 markdown 文本。
-
-        默认不支持，子类可按需覆写。
+        """解析 PDF，返回 markdown 文本。
 
         Args:
             pdf_path: PDF 文件路径。
@@ -28,8 +27,5 @@ class OCREngine(ABC):
 
         Returns:
             解析出的 markdown 文本内容。
-
-        Raises:
-            NotImplementedError: 如果引擎不支持直接解析 PDF。
         """
-        raise NotImplementedError(f"{self.__class__.__name__} 不支持直接解析 PDF")
+        ...

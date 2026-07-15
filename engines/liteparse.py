@@ -19,7 +19,7 @@ class LiteParseEngine(OCREngine):
         self._model = model
         self._api_key = api_key
 
-    def recognize(self, image_path: Path) -> str:
+    def parse_image(self, image_path: Path) -> str:
         """将图片转为 PDF 后解析，返回 markdown 文本。"""
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
             tmp_pdf = Path(f.name)

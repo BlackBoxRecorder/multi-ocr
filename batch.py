@@ -1,14 +1,15 @@
-"""批量处理模块：对目录下的图片或 PDF 进行批量 OCR。"""
+"""批量处理模块：对目录下的图片或 PDF 进行批量 OCR。
+
+目录下只能有一种类型的文件（全图片或全 PDF），混合目录直接报错。
+"""
 
 import sys
-import tempfile
 from pathlib import Path
 
 from tqdm import tqdm
 
 from engines.base import OCREngine
-from ocr import ocr_file
-from pdf_utils import images_to_pdf
+from single import ocr_file
 
 # 支持的图片格式
 _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
@@ -48,7 +49,7 @@ def _batch_images(input_dir: Path, images: list[Path], engine: OCREngine) -> Non
     results: list[str] = []
 
     for img_path in tqdm(images, desc=f"处理 {input_dir.name} 目录", file=sys.stderr):
-        text = engine.recognize(img_path)
+        text = engine.parse_image(img_path)
         results.append(text)
 
     merged = "\n\n".join(results)
@@ -68,41 +69,15 @@ def _batch_pdfs(pdfs: list[Path], engine: OCREngine) -> None:
         ocr_file(input_path=pdf_path, engine=engine, pages=None)
 
 
-def _images_to_pdf_and_parse(
-    input_dir: Path, images: list[Path], engine: OCREngine
-) -> None:
-    """图片目录合并为 PDF，再用 LiteParse 解析。
-
-    适用于 liteparse 引擎（不支持图片直接识别）处理图片目录的场景。
-
-    Args:
-        input_dir: 输入目录路径。
-        images: 已排序的图片文件路径列表。
-        engine: LiteParse 引擎实例。
-    """
-    print(f"正在将 {len(images)} 张图片合并为 PDF...", file=sys.stderr)
-    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp_file:
-        tmp_pdf_path = Path(tmp_file.name)
-
-    try:
-        images_to_pdf(images, tmp_pdf_path)
-        print("PDF 合并完成，开始解析...", file=sys.stderr)
-        merged = engine.parse_pdf(tmp_pdf_path)
-        output_path = input_dir.with_suffix(".md")
-        output_path.write_text(merged, encoding="utf-8")
-        print(f"已保存: {output_path}")
-    finally:
-        tmp_pdf_path.unlink(missing_ok=True)
-
-
 def ocr_directory(input_dir: Path, engine: OCREngine) -> None:
     """批量处理目录下的图片或 PDF 文件。
 
+    目录下只能有一种类型的文件（全图片或全 PDF），混合目录直接报错。
+
     根据目录内容与引擎类型自动选择处理分支：
-    - 仅有图片 + 引擎支持 parse_pdf → 图片合并为 PDF 再解析（更高效）
+    - 仅有图片 + 原生 PDF 引擎 → 图片合并为 PDF 再解析（更高效）
     - 仅有图片 + 其他引擎 → 图片批量流程（合并输出）
     - 仅有 PDF → PDF 批量流程（各自输出）
-    - 混合目录 → 图片按批量流程处理
 
     Args:
         input_dir: 输入目录路径。
@@ -110,7 +85,7 @@ def ocr_directory(input_dir: Path, engine: OCREngine) -> None:
 
     Raises:
         FileNotFoundError: 目录不存在。
-        ValueError: 目录中没有可处理的文件，或 liteparse 遇到混合目录。
+        ValueError: 目录中没有可处理的文件，或包含混合文件类型。
     """
     if not input_dir.exists():
         raise FileNotFoundError(f"目录不存在: {input_dir}")
@@ -119,21 +94,18 @@ def ocr_directory(input_dir: Path, engine: OCREngine) -> None:
 
     images, pdfs = _collect_files(input_dir)
 
+    # 严格检查：不允许混合文件类型
+    if images and pdfs:
+        raise ValueError(
+            f"目录中包含混合文件类型（图片和 PDF），请确保目录下只有一种类型的文件。\n"
+            f"  图片: {len(images)} 个 (.png/.jpg/.jpeg)\n"
+            f"  PDF:  {len(pdfs)} 个 (.pdf)"
+        )
+
     if not images and not pdfs:
         raise ValueError(f"目录中没有可处理的图片或 PDF 文件: {input_dir}")
 
-    # 分发处理
-    has_parse_pdf = type(engine).parse_pdf is not OCREngine.parse_pdf
-
-    if images and pdfs:
-        # 混合目录 → 按图片批量处理
-        _batch_images(input_dir, images, engine)
-    elif images and has_parse_pdf:
-        # 仅有图片 + 支持 parse_pdf → 合并为 PDF 再解析
-        _images_to_pdf_and_parse(input_dir, images, engine)
-    elif images:
-        # 仅有图片 → 图片批量流程
+    if images:
         _batch_images(input_dir, images, engine)
     else:
-        # 仅有 PDF
         _batch_pdfs(pdfs, engine)

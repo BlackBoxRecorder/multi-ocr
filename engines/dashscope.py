@@ -1,16 +1,18 @@
 import base64
 import re
+import shutil
 from pathlib import Path
 
 from openai import OpenAI
 
 from engines.base import OCREngine
+from pdf_utils import split_pdf
 
 
 class DashScopeEngine(OCREngine):
     """DashScope (阿里云百炼) OCR 引擎，兼容 OpenAI SDK。
 
-    支持 Qwen-OCR 系列模型（qwen3.5-ocr 等），通过 OpenAI 兼容接口调用。
+    支持 Qwen-VL-OCR 模型，通过 OpenAI 兼容接口调用。
     参考文档：https://help.aliyun.com/zh/model-studio/qwen-ocr
 
     默认为通用 OCR 场景，如需使用内置任务（高精识别、表格解析、信息抽取等），
@@ -21,7 +23,6 @@ class DashScopeEngine(OCREngine):
 
     # 模型名称 -> 提示词映射（按前缀匹配）
     _PROMPT_MAP: dict[str, str] = {
-        "qwen3.5-ocr": "OCR this image and output in markdown format.",
         "qwen-vl-ocr": "OCR this image and output in markdown format.",
     }
 
@@ -38,7 +39,7 @@ class DashScopeEngine(OCREngine):
                 return prompt
         return self._FALLBACK_PROMPT
 
-    def recognize(self, image_path: Path) -> str:
+    def parse_image(self, image_path: Path) -> str:
         with open(image_path, "rb") as f:
             image_data = base64.b64encode(f.read()).decode("utf-8")
 
@@ -80,3 +81,15 @@ class DashScopeEngine(OCREngine):
         content = re.sub(r"^```(?:markdown)?\s*\n", "", content, count=1)
         content = re.sub(r"\n```\s*$", "", content)
         return content.strip()
+
+    def parse_pdf(self, pdf_path: Path, pages: str | None = None) -> str:
+        image_paths, page_labels = split_pdf(pdf_path, pages)
+        try:
+            results = []
+            for img_path, label in zip(image_paths, page_labels):
+                text = self.parse_image(img_path)
+                results.append(f"--- 第 {label} 页 ---\n{text}")
+            return "\n\n".join(results)
+        finally:
+            if image_paths:
+                shutil.rmtree(image_paths[0].parent, ignore_errors=True)

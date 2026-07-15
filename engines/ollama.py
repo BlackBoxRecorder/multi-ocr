@@ -1,9 +1,11 @@
 import re
+import shutil
 from pathlib import Path
 
 from ollama import Client
 
 from engines.base import OCREngine
+from pdf_utils import split_pdf
 
 
 class OllamaEngine(OCREngine):
@@ -38,7 +40,7 @@ class OllamaEngine(OCREngine):
                 return prompt
         return self._FALLBACK_PROMPT
 
-    def recognize(self, image_path: Path) -> str:
+    def parse_image(self, image_path: Path) -> str:
         prompt = self._get_prompt()
 
         response = self._client.chat(
@@ -59,3 +61,15 @@ class OllamaEngine(OCREngine):
         content = re.sub(r"<\|/?ref\|>", "", content)
         content = re.sub(r"<\|/?det\|>", "", content)
         return content.strip()
+
+    def parse_pdf(self, pdf_path: Path, pages: str | None = None) -> str:
+        image_paths, page_labels = split_pdf(pdf_path, pages)
+        try:
+            results = []
+            for img_path, label in zip(image_paths, page_labels):
+                text = self.parse_image(img_path)
+                results.append(f"--- 第 {label} 页 ---\n{text}")
+            return "\n\n".join(results)
+        finally:
+            if image_paths:
+                shutil.rmtree(image_paths[0].parent, ignore_errors=True)

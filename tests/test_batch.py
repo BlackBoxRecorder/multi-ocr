@@ -8,36 +8,23 @@ from batch import (
     _batch_images,
     _batch_pdfs,
     _collect_files,
-    _images_to_pdf_and_parse,
     ocr_directory,
 )
 from engines.base import OCREngine
 
 
 class MockRecognizeEngine(OCREngine):
-    """模拟支持 recognize 的引擎（如 SiliconFlow / DashScope）。"""
+    """模拟 OCR 引擎。"""
 
     def __init__(self, text: str = "mock ocr result") -> None:
         self._text = text
-        self.recognize_calls: list[Path] = []
+        self.parse_image_calls: list[Path] = []
 
-    def recognize(self, image_path: Path) -> str:
-        self.recognize_calls.append(image_path)
-        return f"{self._text} [{image_path.name}]"
-
-
-class MockParsePdfEngine(OCREngine):
-    """模拟 LiteParse 引擎（支持 parse_pdf，图片通过转 PDF 支持）。"""
-
-    def __init__(self, text: str = "parsed pdf content") -> None:
-        self._text = text
-        self.parse_calls: list[Path] = []
-
-    def recognize(self, image_path: Path) -> str:
+    def parse_image(self, image_path: Path) -> str:
+        self.parse_image_calls.append(image_path)
         return f"{self._text} [{image_path.name}]"
 
     def parse_pdf(self, pdf_path: Path, pages: str | None = None) -> str:
-        self.parse_calls.append(pdf_path)
         return self._text
 
 
@@ -146,9 +133,9 @@ class TestBatchImages:
 
         _batch_images(input_dir, [img_a, img_b], engine)
 
-        assert len(engine.recognize_calls) == 2
-        assert img_a in engine.recognize_calls
-        assert img_b in engine.recognize_calls
+        assert len(engine.parse_image_calls) == 2
+        assert img_a in engine.parse_image_calls
+        assert img_b in engine.parse_image_calls
 
 
 # ---------------------------------------------------------------------------
@@ -201,53 +188,6 @@ class TestBatchPdfs:
             )
 
 
-# ---------------------------------------------------------------------------
-# _images_to_pdf_and_parse
-# ---------------------------------------------------------------------------
-
-
-class TestImagesToPdfAndParse:
-    def test_calls_parse_pdf(self, tmp_path: Path, jpg_path: Path) -> None:
-        """验证调用了 engine.parse_pdf 并输出到 input_dir.md。"""
-        input_dir = tmp_path / "scans"
-        input_dir.mkdir()
-        # 复制真实图片到目录中
-        import shutil
-
-        img_a = input_dir / "a.jpg"
-        img_b = input_dir / "b.jpg"
-        shutil.copy(jpg_path, img_a)
-        shutil.copy(jpg_path, img_b)
-        engine = MockParsePdfEngine("liteparse result")
-
-        _images_to_pdf_and_parse(input_dir, [img_a, img_b], engine)
-
-        # 验证调用了 parse_pdf
-        assert len(engine.parse_calls) == 1
-
-        # 验证输出文件
-        expected = tmp_path / "scans.md"
-        assert expected.exists()
-        assert expected.read_text(encoding="utf-8") == "liteparse result"
-
-    def test_cleans_up_temp_pdf(self, tmp_path: Path, jpg_path: Path) -> None:
-        """临时 PDF 在处理后被清理。"""
-        input_dir = tmp_path / "scans"
-        input_dir.mkdir()
-        import shutil
-
-        img_a = input_dir / "a.jpg"
-        shutil.copy(jpg_path, img_a)
-        engine = MockParsePdfEngine()
-
-        _images_to_pdf_and_parse(input_dir, [img_a], engine)
-
-        # 验证 parse_pdf 被调用时传入的路径不再存在
-        called_path = engine.parse_calls[0]
-        assert not called_path.exists()
-
-
-# ---------------------------------------------------------------------------
 # ocr_directory dispatch
 # ---------------------------------------------------------------------------
 
@@ -268,15 +208,13 @@ class TestOcrDirectoryErrors:
         with pytest.raises(ValueError, match="没有可处理的"):
             ocr_directory(tmp_path, MockRecognizeEngine())
 
-    def test_mixed_dir_with_parse_pdf_engine(self, tmp_path: Path) -> None:
-        """混合目录 + parse_pdf 引擎 → 不再报错，按图片批量处理。"""
+    def test_mixed_dir(self, tmp_path: Path) -> None:
+        """混合目录 → 报错退出。"""
         (tmp_path / "img.jpg").touch()
         (tmp_path / "doc.pdf").touch()
-        engine = MockParsePdfEngine()
-        # 不应抛出异常
-        ocr_directory(tmp_path, engine)
-        # 图片批量流程：输出为 tmp_path.md
-        assert tmp_path.with_suffix(".md").exists()
+        engine = MockRecognizeEngine()
+        with pytest.raises(ValueError, match="混合文件类型"):
+            ocr_directory(tmp_path, engine)
 
 
 class TestOcrDirectoryDispatch:
@@ -290,22 +228,9 @@ class TestOcrDirectoryDispatch:
 
         ocr_directory(tmp_path, engine)
 
-        # 验证调用了 recognize
-        assert len(engine.recognize_calls) == 1
+        # 验证调用了 parse_image
+        assert len(engine.parse_image_calls) == 1
         # 验证输出文件
-        assert tmp_path.with_suffix(".md").exists()
-
-    def test_images_only_liteparse(self, tmp_path: Path, jpg_path: Path) -> None:
-        """仅有图片 + liteparse → 图片合并为 PDF 再解析。"""
-        import shutil
-
-        img_a = tmp_path / "a.jpg"
-        shutil.copy(jpg_path, img_a)
-        engine = MockParsePdfEngine()
-
-        ocr_directory(tmp_path, engine)
-
-        assert len(engine.parse_calls) == 1
         assert tmp_path.with_suffix(".md").exists()
 
     def test_pdfs_only(self, tmp_path: Path) -> None:
@@ -324,7 +249,7 @@ class TestOcrDirectoryDispatch:
         assert (tmp_path / "doc.md").exists()
 
     def test_mixed_non_liteparse(self, tmp_path: Path, jpg_path: Path) -> None:
-        """混合目录 + 非 liteparse → 图片批量。"""
+        """混合目录 → 报错退出。"""
         import shutil
 
         img = tmp_path / "img.jpg"
@@ -332,8 +257,5 @@ class TestOcrDirectoryDispatch:
         (tmp_path / "doc.pdf").touch()
         engine = MockRecognizeEngine()
 
-        ocr_directory(tmp_path, engine)
-
-        # 应该走了图片批量流程
-        assert len(engine.recognize_calls) == 1
-        assert tmp_path.with_suffix(".md").exists()
+        with pytest.raises(ValueError, match="混合文件类型"):
+            ocr_directory(tmp_path, engine)

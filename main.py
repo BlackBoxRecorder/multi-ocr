@@ -4,6 +4,13 @@
 DashScope（Qwen-VL-OCR）、
 LiteParse（本地 PDF 解析）、
 Ollama（本地 DeepSeek-OCR）多种 OCR 引擎。
+
+用法:
+    python main.py <path> [--model MODEL] [--pages PAGES] [--api-key KEY] [--ollama-url URL]
+
+    <path> 可以是文件或目录：
+    - 文件：单文件模式，自动判断图片/PDF
+    - 目录：批量模式，目录下只能有一种类型的文件（全图片或全 PDF）
 """
 
 import argparse
@@ -12,7 +19,7 @@ import sys
 from pathlib import Path
 
 from engines import get_engine
-from ocr import ocr_file
+from single import ocr_file
 from batch import ocr_directory
 
 DEFAULT_MODEL = "silicon-deepseek-ocr"
@@ -29,7 +36,6 @@ MODEL_MAP: dict[str, tuple[str, str, str]] = {
         "PaddlePaddle/PaddleOCR-VL-1.5",
         "SiliconFlow + PaddleOCR-VL-1.5",
     ),
-    "dashscope-qwen-ocr": ("dashscope", "qwen3.5-ocr", "DashScope + Qwen-OCR"),
     "dashscope-qwen-vl-ocr": ("dashscope", "qwen-vl-ocr", "DashScope + Qwen-VL-OCR"),
     "liteparse": ("liteparse", "", "LiteParse (本地 PDF 解析)"),
     "ollama-deepseek-ocr": (
@@ -83,17 +89,7 @@ def main() -> None:
     parser.add_argument(
         "input",
         type=Path,
-        nargs="?",
-        default=None,
-        help="输入文件路径（PDF 或图片）",
-    )
-    parser.add_argument(
-        "-d",
-        "--input-dir",
-        type=Path,
-        default=None,
-        help="输入目录路径，批量处理目录下所有图片/PDF",
-        dest="input_dir",
+        help="输入文件路径（PDF 或图片）或目录路径（批量处理）",
     )
     parser.add_argument(
         "--model",
@@ -103,7 +99,7 @@ def main() -> None:
     parser.add_argument(
         "--pages",
         default=None,
-        help="页码范围，如 1-3,5（仅对 PDF 有效）",
+        help="页码范围，如 1-3,5（仅对单文件 PDF 有效）",
     )
     parser.add_argument(
         "--api-key",
@@ -117,13 +113,21 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # 校验：input 和 -d 二选一
-    if args.input is None and args.input_dir is None:
-        parser.error("请指定输入文件或使用 -d/--input-dir 指定目录。")
-    if args.input is not None and args.input_dir is not None:
-        parser.error("input 和 -d/--input-dir 不能同时使用。")
+    input_path: Path = args.input
 
-    batch_mode = args.input_dir is not None
+    # 校验路径存在
+    if not input_path.exists():
+        print(f"错误: 路径不存在: {input_path}", file=sys.stderr)
+        sys.exit(1)
+
+    # 判断模式：目录 → 批量，文件 → 单文件
+    batch_mode = input_path.is_dir()
+
+    # --pages 约束
+    pages: str | None = args.pages
+    if batch_mode and pages:
+        print("⚠️  --pages 在批量模式下忽略", file=sys.stderr)
+        pages = None
 
     # 解析 --model 缩写 → provider + model_name
     entry = MODEL_MAP.get(args.model)
@@ -165,14 +169,14 @@ def main() -> None:
     try:
         if batch_mode:
             ocr_directory(
-                input_dir=args.input_dir,
+                input_dir=input_path,
                 engine=engine,
             )
         else:
             ocr_file(
-                input_path=args.input,
+                input_path=input_path,
                 engine=engine,
-                pages=args.pages,
+                pages=pages,
             )
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         print(f"错误: {e}", file=sys.stderr)

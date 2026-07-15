@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from pdf_utils import images_to_pdf, parse_pages, pdf_to_images
+from pdf_utils import images_to_pdf, parse_pages, pdf_to_images, split_pdf
 
 
 class TestParsePages:
@@ -151,3 +151,40 @@ class TestImagesToPdf:
         doc = fitz.open(output)
         assert doc.page_count == 1
         doc.close()
+
+
+class TestSplitPdf:
+    """测试 split_pdf：将 PDF 拆解为图片列表和页码标签。"""
+
+    def test_all_pages(self, pdf_path: Path) -> None:
+        """不指定页码范围则返回全部页。"""
+        images, labels = split_pdf(pdf_path, None)
+        assert len(images) > 0
+        assert len(images) == len(labels)
+        # 标签为 1-based
+        assert labels[0] == 1
+        for img in images:
+            assert img.suffix == ".png"
+            assert img.exists()
+
+    def test_specific_pages(self, pdf_path: Path) -> None:
+        """指定页码范围只返回对应页。"""
+        images, labels = split_pdf(pdf_path, "1")
+        assert len(images) == 1
+        assert labels == [1]
+
+    def test_page_range(self, pdf_path: Path) -> None:
+        """页码范围正确拆分。"""
+        images, labels = split_pdf(pdf_path, "1-1")
+        assert len(images) == 1
+        assert labels == [1]
+
+    def test_labels_are_1_based(self, pdf_path: Path) -> None:
+        """页码标签为 1-based。"""
+        images, labels = split_pdf(pdf_path, "1")
+        assert labels[0] == 1
+
+    def test_invalid_page_range(self, pdf_path: Path) -> None:
+        """页码范围越界抛出 ValueError。"""
+        with pytest.raises(ValueError, match="越界"):
+            split_pdf(pdf_path, "999")

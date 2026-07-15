@@ -19,12 +19,12 @@ class TestGetEngine:
 
     def test_known_provider_dashscope(self) -> None:
         engine = get_engine(
-            provider="dashscope", model="qwen3.5-ocr", api_key="test-key"
+            provider="dashscope", model="qwen-vl-ocr", api_key="test-key"
         )
         from engines.dashscope import DashScopeEngine
 
         assert isinstance(engine, DashScopeEngine)
-        assert engine._model == "qwen3.5-ocr"
+        assert engine._model == "qwen-vl-ocr"
 
     def test_unknown_provider(self) -> None:
         with pytest.raises(ValueError, match="未知的 OCR 提供商"):

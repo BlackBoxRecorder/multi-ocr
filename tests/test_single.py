@@ -1,20 +1,20 @@
-"""测试 ocr 模块：OCR 识别入口函数。"""
+"""测试 single 模块：单文件 OCR 入口函数。"""
 
 from pathlib import Path
 
 import pytest
 
 from engines.base import OCREngine
-from ocr import _is_image, _is_pdf, ocr_file
+from single import _is_image, _is_pdf, ocr_file
 
 
 class MockParsePdfEngine(OCREngine):
-    """模拟支持 parse_pdf 的引擎（如 LiteParse）。"""
+    """模拟支持原生 parse_pdf 的引擎（如 LiteParse）。"""
 
     def __init__(self) -> None:
         pass
 
-    def recognize(self, image_path: Path) -> str:
+    def parse_image(self, image_path: Path) -> str:
         raise NotImplementedError("仅支持 PDF")
 
     def parse_pdf(self, pdf_path: Path, pages: str | None = None) -> str:
@@ -107,7 +107,7 @@ class TestOcrFile:
         assert "1.jpg" in result
 
     def test_pdf_with_parse_pdf_engine(self, pdf_path: Path) -> None:
-        """PDF + 支持 parse_pdf 的引擎 → 跳过拆页，直接解析。"""
+        """PDF + 支持 parse_pdf 的引擎 → 直接解析。"""
         engine = MockParsePdfEngine()
         result = ocr_file(input_path=pdf_path, engine=engine)
         assert "parsed: 2.pdf" in result
