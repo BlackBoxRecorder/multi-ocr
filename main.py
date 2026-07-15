@@ -86,13 +86,6 @@ def main() -> None:
         default=None,
         help=_build_api_key_help(),
     )
-    parser.add_argument(
-        "--stdout",
-        action="store_true",
-        default=False,
-        help="输出到终端而非保存文件",
-    )
-
     args = parser.parse_args()
 
     # 解析 --model 缩写 → provider + model_name
@@ -133,7 +126,6 @@ def main() -> None:
             input_path=args.input,
             engine=engine,
             pages=args.pages,
-            stdout=args.stdout,
         )
     except (FileNotFoundError, ValueError) as e:
         print(f"错误: {e}", file=sys.stderr)

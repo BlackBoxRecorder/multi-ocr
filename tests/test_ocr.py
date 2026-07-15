@@ -43,22 +43,20 @@ class TestOcrFile:
 
     def test_image_ocr(self, jpg_path: Path, mock_engine, tmp_path: Path) -> None:
         """图片 OCR：返回引擎识别文本。"""
-        result = ocr_file(input_path=jpg_path, engine=mock_engine, stdout=True)
+        result = ocr_file(input_path=jpg_path, engine=mock_engine)
         assert "mock ocr result" in result
         assert "1.jpg" in result
 
     def test_pdf_ocr(self, pdf_path: Path, mock_engine) -> None:
         """PDF OCR：每页标注页码。"""
-        result = ocr_file(input_path=pdf_path, engine=mock_engine, stdout=True)
+        result = ocr_file(input_path=pdf_path, engine=mock_engine)
         assert "mock ocr result" in result
         assert "--- 第" in result
         assert "页 ---" in result
 
     def test_pdf_with_page_range(self, pdf_path: Path, mock_engine) -> None:
         """PDF OCR 指定页码范围。"""
-        result = ocr_file(
-            input_path=pdf_path, engine=mock_engine, pages="1", stdout=True
-        )
+        result = ocr_file(input_path=pdf_path, engine=mock_engine, pages="1")
         assert "--- 第 1 页 ---" in result
 
     def test_file_not_found(self, mock_engine) -> None:
@@ -74,12 +72,12 @@ class TestOcrFile:
             ocr_file(input_path=bmp_file, engine=mock_engine)
 
     def test_save_to_file(self, jpg_path: Path, mock_engine) -> None:
-        """stdout=False 时保存 .txt 文件。"""
+        """默认保存 .txt 文件。"""
         expected_txt = jpg_path.with_suffix(".txt")
         expected_txt.unlink(missing_ok=True)
 
         try:
-            result = ocr_file(input_path=jpg_path, engine=mock_engine, stdout=False)
+            result = ocr_file(input_path=jpg_path, engine=mock_engine)
             assert expected_txt.exists()
             assert expected_txt.read_text(encoding="utf-8") == result
         finally:
@@ -87,6 +85,6 @@ class TestOcrFile:
 
     def test_image_ocr_with_custom_engine(self, jpg_path: Path, custom_engine) -> None:
         """使用自定义引擎的识别。"""
-        result = ocr_file(input_path=jpg_path, engine=custom_engine, stdout=True)
+        result = ocr_file(input_path=jpg_path, engine=custom_engine)
         assert "custom text" in result
         assert "1.jpg" in result

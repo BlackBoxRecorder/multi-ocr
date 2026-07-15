@@ -2,6 +2,8 @@ import shutil
 import sys
 from pathlib import Path
 
+from tqdm import tqdm
+
 from engines.base import OCREngine
 from pdf_utils import parse_pages, pdf_to_images
 
@@ -21,7 +23,6 @@ def ocr_file(
     input_path: Path,
     engine: OCREngine,
     pages: str | None = None,
-    stdout: bool = False,
 ) -> str:
     """对 PDF 或图片文件执行 OCR。
 
@@ -29,7 +30,6 @@ def ocr_file(
         input_path: 输入文件路径（PDF 或图片）。
         engine: OCR 引擎实例。
         pages: 页码范围字符串（仅对 PDF 有效），如 "1-3,5"。
-        stdout: True 则打印到终端，False 则保存文件。
 
     Returns:
         合并后的 OCR 文本。
@@ -55,7 +55,9 @@ def ocr_file(
 
     # 逐页识别
     results: list[str] = []
-    for i, img_path in enumerate(images):
+    for i, img_path in enumerate(
+        tqdm(images, file=sys.stderr, desc=f"识别 {input_path.name}")
+    ):
         try:
             text = engine.recognize(img_path)
         except Exception as e:
@@ -70,12 +72,9 @@ def ocr_file(
     merged = "\n\n".join(results)
 
     # 输出
-    if stdout:
-        print(merged)
-    else:
-        output_path = input_path.with_suffix(".txt")
-        output_path.write_text(merged, encoding="utf-8")
-        print(f"已保存: {output_path}")
+    output_path = input_path.with_suffix(".txt")
+    output_path.write_text(merged, encoding="utf-8")
+    print(f"已保存: {output_path}")
 
     return merged
 
