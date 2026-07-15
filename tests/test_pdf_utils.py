@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from pdf_utils import parse_pages, pdf_to_images
+from pdf_utils import images_to_pdf, parse_pages, pdf_to_images
 
 
 class TestParsePages:
@@ -118,3 +118,36 @@ class TestPdfToImages:
         imgs1 = pdf_to_images(pdf_path, pages=[0])
         imgs2 = pdf_to_images(pdf_path, pages=[0])
         assert imgs1[0].parent != imgs2[0].parent
+
+
+class TestImagesToPdf:
+    """测试 images_to_pdf：将多张图片合并为一个 PDF。"""
+
+    def test_creates_pdf(self, jpg_path: Path, tmp_path: Path) -> None:
+        output = tmp_path / "merged.pdf"
+        result = images_to_pdf([jpg_path], output)
+        assert result == output
+        assert output.exists()
+        assert output.stat().st_size > 0
+
+    def test_multi_page_pdf(self, jpg_path: Path, tmp_path: Path) -> None:
+        """多张图片合并后 PDF 应有对应页数。"""
+        import fitz
+
+        output = tmp_path / "merged.pdf"
+        images_to_pdf([jpg_path, jpg_path], output)
+
+        doc = fitz.open(output)
+        assert doc.page_count == 2
+        doc.close()
+
+    def test_single_image(self, jpg_path: Path, tmp_path: Path) -> None:
+        """单张图片合并后为单页 PDF。"""
+        import fitz
+
+        output = tmp_path / "single.pdf"
+        images_to_pdf([jpg_path], output)
+
+        doc = fitz.open(output)
+        assert doc.page_count == 1
+        doc.close()

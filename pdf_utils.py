@@ -79,3 +79,35 @@ def pdf_to_images(pdf_path: Path, pages: list[int] | None = None) -> list[Path]:
 
     doc.close()
     return image_paths
+
+
+def images_to_pdf(image_paths: list[Path], output_path: Path) -> Path:
+    """将多张图片按顺序合并为一个 PDF 文件。
+
+    每张图片作为独立的一页，原图嵌入。
+
+    Args:
+        image_paths: 图片文件路径列表，按页面顺序排列。
+        output_path: 输出的 PDF 文件路径。
+
+    Returns:
+        输出的 PDF 文件路径。
+    """
+    pdf_doc = fitz.open()
+    try:
+        for img_path in image_paths:
+            img_doc = fitz.open(img_path)
+            page = img_doc[0]
+            pix = page.get_pixmap()
+            img_doc.close()
+
+            # 创建新页面，大小与图片一致
+            pdf_page = pdf_doc.new_page(width=pix.width, height=pix.height)
+            pdf_page.insert_image(
+                pdf_page.rect,
+                pixmap=pix,
+            )
+        pdf_doc.save(output_path)
+        return output_path
+    finally:
+        pdf_doc.close()

@@ -12,6 +12,7 @@ from pathlib import Path
 
 from engines import get_engine
 from ocr import ocr_file
+from batch import ocr_directory
 
 DEFAULT_MODEL = "silicon-deepseek-ocr"
 
@@ -76,7 +77,17 @@ def main() -> None:
     parser.add_argument(
         "input",
         type=Path,
+        nargs="?",
+        default=None,
         help="输入文件路径（PDF 或图片）",
+    )
+    parser.add_argument(
+        "-d",
+        "--input-dir",
+        type=Path,
+        default=None,
+        help="输入目录路径，批量处理目录下所有图片/PDF",
+        dest="input_dir",
     )
     parser.add_argument(
         "--model",
@@ -94,6 +105,14 @@ def main() -> None:
         help=_build_api_key_help(),
     )
     args = parser.parse_args()
+
+    # 校验：input 和 -d 二选一
+    if args.input is None and args.input_dir is None:
+        parser.error("请指定输入文件或使用 -d/--input-dir 指定目录。")
+    if args.input is not None and args.input_dir is not None:
+        parser.error("input 和 -d/--input-dir 不能同时使用。")
+
+    batch_mode = args.input_dir is not None
 
     # 解析 --model 缩写 → provider + model_name
     entry = MODEL_MAP.get(args.model)
@@ -129,12 +148,18 @@ def main() -> None:
 
     # 执行 OCR
     try:
-        ocr_file(
-            input_path=args.input,
-            engine=engine,
-            pages=args.pages,
-        )
-    except (FileNotFoundError, ValueError) as e:
+        if batch_mode:
+            ocr_directory(
+                input_dir=args.input_dir,
+                engine=engine,
+            )
+        else:
+            ocr_file(
+                input_path=args.input,
+                engine=engine,
+                pages=args.pages,
+            )
+    except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         print(f"错误: {e}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
