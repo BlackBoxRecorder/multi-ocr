@@ -1,9 +1,10 @@
-"""Multi-OCR: 将 PDF 和图片转换为文字。
+"""Multi-OCR: 将 PDF 和图片转换为 markdown 文档。
 
-支持 SiliconFlow（DeepSeek-OCR / PaddleOCR-VL-1.5）、
-DashScope（Qwen-VL-OCR）、
-LiteParse（本地 PDF 解析）、
-Ollama（本地 DeepSeek-OCR）多种 OCR 引擎。
+支持多种 OCR 引擎:
+- SiliconFlow（DeepSeek-OCR / PaddleOCR-VL-1.5）
+- DashScope（Qwen-VL-OCR）
+- LiteParse（本地 PDF 解析）
+- Ollama（本地 DeepSeek-OCR）
 
 用法:
     python main.py <path> [--model MODEL] [--pages PAGES] [--api-key KEY] [--ollama-url URL]
