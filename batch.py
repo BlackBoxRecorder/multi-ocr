@@ -4,6 +4,7 @@
 """
 
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from tqdm import tqdm
@@ -38,38 +39,76 @@ def _collect_files(input_dir: Path) -> tuple[list[Path], list[Path]]:
     return images, pdfs
 
 
-def _batch_images(input_dir: Path, images: list[Path], engine: OCREngine) -> None:
+def _batch_images(
+    input_dir: Path, images: list[Path], engine: OCREngine, concurrency: int = 1
+) -> None:
     """图片批量处理：逐张识别，合并结果写入 input_dir.md。
 
     Args:
         input_dir: 输入目录路径。
         images: 已排序的图片文件路径列表。
         engine: OCR 引擎实例。
+        concurrency: 并发数，默认 1（串行）。
     """
-    results: list[str] = []
+    if concurrency > 1:
+        results: list[str | None] = [None] * len(images)
+        with ThreadPoolExecutor(max_workers=concurrency) as executor:
+            future_to_idx = {
+                executor.submit(engine.parse_image, img_path): idx
+                for idx, img_path in enumerate(images)
+            }
+            for future in tqdm(
+                as_completed(future_to_idx),
+                total=len(images),
+                desc=f"处理 {input_dir.name} 目录",
+                file=sys.stderr,
+            ):
+                idx = future_to_idx[future]
+                results[idx] = future.result()
+        merged = "\n\n".join(r for r in results if r is not None)
+    else:
+        results = []
+        for img_path in tqdm(
+            images, desc=f"处理 {input_dir.name} 目录", file=sys.stderr
+        ):
+            text = engine.parse_image(img_path)
+            results.append(text)
+        merged = "\n\n".join(results)
 
-    for img_path in tqdm(images, desc=f"处理 {input_dir.name} 目录", file=sys.stderr):
-        text = engine.parse_image(img_path)
-        results.append(text)
-
-    merged = "\n\n".join(results)
     output_path = input_dir.with_suffix(".md")
     output_path.write_text(merged, encoding="utf-8")
     print(f"已保存: {output_path}")
 
 
-def _batch_pdfs(pdfs: list[Path], engine: OCREngine) -> None:
+def _batch_pdfs(pdfs: list[Path], engine: OCREngine, concurrency: int = 1) -> None:
     """PDF 批量处理：逐文件调用 ocr_file()，各自输出 .md 文件。
 
     Args:
         pdfs: 已排序的 PDF 文件路径列表。
         engine: OCR 引擎实例。
+        concurrency: 并发数，默认 1（串行）。
     """
-    for pdf_path in pdfs:
-        ocr_file(input_path=pdf_path, engine=engine, pages=None)
+    if concurrency > 1:
+        with ThreadPoolExecutor(max_workers=concurrency) as executor:
+            futures = [
+                executor.submit(
+                    ocr_file, input_path=pdf_path, engine=engine, pages=None
+                )
+                for pdf_path in pdfs
+            ]
+            for future in tqdm(
+                as_completed(futures),
+                total=len(pdfs),
+                desc=f"处理 {len(pdfs)} 个 PDF",
+                file=sys.stderr,
+            ):
+                future.result()  # 重新抛出可能的异常
+    else:
+        for pdf_path in pdfs:
+            ocr_file(input_path=pdf_path, engine=engine, pages=None)
 
 
-def ocr_directory(input_dir: Path, engine: OCREngine) -> None:
+def ocr_directory(input_dir: Path, engine: OCREngine, concurrency: int = 1) -> None:
     """批量处理目录下的图片或 PDF 文件。
 
     目录下只能有一种类型的文件（全图片或全 PDF），混合目录直接报错。
@@ -82,6 +121,7 @@ def ocr_directory(input_dir: Path, engine: OCREngine) -> None:
     Args:
         input_dir: 输入目录路径。
         engine: OCR 引擎实例。
+        concurrency: 并发数，默认 1（串行）。
 
     Raises:
         FileNotFoundError: 目录不存在。
@@ -106,6 +146,6 @@ def ocr_directory(input_dir: Path, engine: OCREngine) -> None:
         raise ValueError(f"目录中没有可处理的图片或 PDF 文件: {input_dir}")
 
     if images:
-        _batch_images(input_dir, images, engine)
+        _batch_images(input_dir, images, engine, concurrency)
     else:
-        _batch_pdfs(pdfs, engine)
+        _batch_pdfs(pdfs, engine, concurrency)

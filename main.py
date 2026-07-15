@@ -111,6 +111,13 @@ def main() -> None:
         default=None,
         help="Ollama 服务地址（默认读取 OLLAMA_BASE_URL 环境变量，都没有则用 http://127.0.0.1:11434）",
     )
+    parser.add_argument(
+        "-j",
+        "--concurrency",
+        type=int,
+        default=1,
+        help="并发数量（默认: 1，即串行处理）",
+    )
     args = parser.parse_args()
 
     input_path: Path = args.input
@@ -153,6 +160,12 @@ def main() -> None:
     # 获取 Ollama base_url（仅 ollama 引擎使用）
     ollama_url = args.ollama_url or os.environ.get("OLLAMA_BASE_URL")
 
+    # 并发数
+    concurrency: int = args.concurrency
+    if concurrency < 1:
+        print("错误: --concurrency 必须 >= 1", file=sys.stderr)
+        sys.exit(1)
+
     # 获取引擎
     try:
         engine = get_engine(
@@ -171,12 +184,14 @@ def main() -> None:
             ocr_directory(
                 input_dir=input_path,
                 engine=engine,
+                concurrency=concurrency,
             )
         else:
             ocr_file(
                 input_path=input_path,
                 engine=engine,
                 pages=pages,
+                concurrency=concurrency,
             )
     except (FileNotFoundError, NotADirectoryError, ValueError) as e:
         print(f"错误: {e}", file=sys.stderr)

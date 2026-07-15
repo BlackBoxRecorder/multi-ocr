@@ -24,6 +24,7 @@ class MockParsePdfEngine(OCREngine):
         pdf_path: Path,
         pages: str | None = None,
         progress_callback: Callable[[], None] | None = None,
+        concurrency: int = 1,
     ) -> str:
         result = f"parsed: {pdf_path.name}"
         if pages:

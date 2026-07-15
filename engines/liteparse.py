@@ -40,12 +40,14 @@ class LiteParseEngine(OCREngine):
         pdf_path: Path,
         pages: str | None = None,
         progress_callback: Callable[[], None] | None = None,
+        concurrency: int = 1,
     ) -> str:
         """直接解析 PDF，返回 markdown 文本。
 
         Args:
             pdf_path: PDF 文件路径。
             pages: 页码范围字符串（如 "1-3,5"），None 表示全部。
+            concurrency: 并发数（LiteParse 为本地引擎，忽略此参数）。
 
         Returns:
             解析出的 markdown 文本内容。

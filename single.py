@@ -23,6 +23,7 @@ def ocr_file(
     input_path: Path,
     engine: OCREngine,
     pages: str | None = None,
+    concurrency: int = 1,
 ) -> str:
     """对 PDF 或图片文件执行 OCR。
 
@@ -30,6 +31,7 @@ def ocr_file(
         input_path: 输入文件路径（PDF 或图片）。
         engine: OCR 引擎实例。
         pages: 页码范围字符串（仅对 PDF 有效），如 "1-3,5"。
+        concurrency: 并发数，默认 1（串行），仅对 PDF 多页有效。
 
     Returns:
         合并后的 OCR 文本。
@@ -67,6 +69,7 @@ def ocr_file(
                     input_path,
                     pages,
                     progress_callback=lambda: pbar.update(1),
+                    concurrency=concurrency,
                 )
                 # 确保进度条到达 100%（兼容 LiteParse 等无逐页回调的引擎）
                 pbar.update(pbar.total - pbar.n)

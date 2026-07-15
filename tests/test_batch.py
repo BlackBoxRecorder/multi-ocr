@@ -24,7 +24,13 @@ class MockRecognizeEngine(OCREngine):
         self.parse_image_calls.append(image_path)
         return f"{self._text} [{image_path.name}]"
 
-    def parse_pdf(self, pdf_path: Path, pages: str | None = None) -> str:
+    def parse_pdf(
+        self,
+        pdf_path: Path,
+        pages: str | None = None,
+        progress_callback=None,
+        concurrency: int = 1,
+    ) -> str:
         return self._text
 
 
@@ -259,3 +265,110 @@ class TestOcrDirectoryDispatch:
 
         with pytest.raises(ValueError, match="混合文件类型"):
             ocr_directory(tmp_path, engine)
+
+
+# ---------------------------------------------------------------------------
+# Concurrency Tests
+# ---------------------------------------------------------------------------
+
+
+class TestBatchImagesConcurrency:
+    def test_concurrent_order_preserved(self, tmp_path: Path) -> None:
+        """并发模式下结果顺序与输入顺序一致。"""
+        input_dir = tmp_path / "imgs"
+        input_dir.mkdir()
+        imgs = []
+        for i in range(5):
+            p = input_dir / f"{i:02d}.png"
+            p.touch()
+            imgs.append(p)
+        engine = MockRecognizeEngine()
+
+        _batch_images(input_dir, imgs, engine, concurrency=3)
+
+        output = (tmp_path / "imgs.md").read_text(encoding="utf-8")
+        # 验证每张图片结果都在
+        for img in imgs:
+            assert img.name in output
+
+    def test_concurrent_with_single_image(self, tmp_path: Path) -> None:
+        """单张图片 + 并发 > 1 也应正常工作。"""
+        input_dir = tmp_path / "single"
+        input_dir.mkdir()
+        img = input_dir / "only.png"
+        img.touch()
+        engine = MockRecognizeEngine()
+
+        _batch_images(input_dir, [img], engine, concurrency=4)
+
+        output = (tmp_path / "single.md").read_text(encoding="utf-8")
+        assert "only.png" in output
+
+    def test_concurrency_default_1_is_sequential(self, tmp_path: Path) -> None:
+        """默认 concurrency=1 保持串行行为。"""
+        input_dir = tmp_path / "seq"
+        input_dir.mkdir()
+        imgs = [input_dir / f"{i}.png" for i in range(3)]
+        for p in imgs:
+            p.touch()
+        engine = MockRecognizeEngine()
+
+        _batch_images(input_dir, imgs, engine)
+
+        assert len(engine.parse_image_calls) == 3
+
+    def test_exception_propagates(self, tmp_path: Path) -> None:
+        """并发模式下，任一任务失败应向上传播异常。"""
+        input_dir = tmp_path / "err"
+        input_dir.mkdir()
+        for i in range(3):
+            (input_dir / f"{i}.png").touch()
+
+        class FailingEngine(MockRecognizeEngine):
+            def parse_image(self, image_path: Path) -> str:
+                if "1.png" in str(image_path):
+                    raise RuntimeError("simulated failure")
+                return super().parse_image(image_path)
+
+        engine = FailingEngine()
+        imgs = sorted(input_dir.iterdir())
+
+        with pytest.raises(RuntimeError, match="simulated failure"):
+            _batch_images(input_dir, imgs, engine, concurrency=2)
+
+
+class TestBatchPdfsConcurrency:
+    def test_concurrent_pdfs_all_processed(self, tmp_path: Path) -> None:
+        """并发模式下所有 PDF 都被处理。"""
+        import fitz
+
+        pdf_paths = []
+        for name in ["a.pdf", "b.pdf", "c.pdf"]:
+            p = tmp_path / name
+            doc = fitz.open()
+            doc.new_page()
+            doc.save(p)
+            doc.close()
+            pdf_paths.append(p)
+
+        engine = MockRecognizeEngine()
+
+        _batch_pdfs(pdf_paths, engine, concurrency=2)
+
+        for pdf in pdf_paths:
+            md = pdf.with_suffix(".md")
+            assert md.exists()
+
+    def test_concurrent_default_1_is_sequential(self, tmp_path: Path) -> None:
+        """默认 concurrency=1 保持串行行为。"""
+        import fitz
+
+        doc = fitz.open()
+        doc.new_page()
+        doc.save(tmp_path / "only.pdf")
+        doc.close()
+
+        engine = MockRecognizeEngine()
+        _batch_pdfs([tmp_path / "only.pdf"], engine)
+
+        assert (tmp_path / "only.md").exists()
