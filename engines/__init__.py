@@ -1,9 +1,11 @@
 from engines.base import OCREngine
+from engines.dashscope import DashScopeEngine
 from engines.siliconflow import SiliconFlowEngine
 
 # 引擎注册表：provider 名 -> Engine 类
 # 添加新提供商时只需在此注册
 _registry: dict[str, type[OCREngine]] = {
+    "dashscope": DashScopeEngine,
     "siliconflow": SiliconFlowEngine,
 }
 
