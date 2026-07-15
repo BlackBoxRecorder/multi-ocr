@@ -39,6 +39,33 @@ python main.py <path> [--model MODEL] [--pages PAGES] [--api-key KEY] [--ollama-
 | 单文件 PDF | 生效，过滤页码 |
 | 批量模式 | 打印警告，忽略 `--pages`，继续执行 |
 
+## 引擎与文件格式适配
+
+不同引擎的原生能力不同，系统自动在格式间转换：
+
+### 引擎能力矩阵
+
+| 引擎 | `recognize()` (图片识别) | `parse_pdf()` (PDF 直接解析) |
+|------|-------------------------|---------------------------|
+| liteparse | ❌ 不支持 | ✅ 支持 |
+| siliconflow | ✅ 支持 | ❌ 不支持 |
+| dashscope | ✅ 支持 | ❌ 不支持 |
+| ollama | ✅ 支持 | ❌ 不支持 |
+
+### 单文件模式下的自动转换
+
+| 输入类型 | liteparse | 其他引擎 (siliconflow/dashscope/ollama) |
+|---------|----------|---------------------------------------|
+| 图片 | 转为单页 PDF → `parse_pdf()` | 直接 `recognize()` |
+| PDF | 直接 `parse_pdf()` | 拆为图片 → `recognize()` 逐页识别 |
+
+### 批量模式下的自动转换
+
+| 输入类型 | liteparse | 其他引擎 (siliconflow/dashscope/ollama) |
+|---------|----------|---------------------------------------|
+| 图片目录 | 合并为 PDF → `parse_pdf()` | 逐张 `recognize()` → 合并输出 |
+| PDF 目录 | 逐文件 `parse_pdf()` | 逐文件拆为图片 → `recognize()` 逐页识别 |
+
 ## 目录类型检测
 
 ### 扫描规则 (`batch.py` `_collect_files`)
