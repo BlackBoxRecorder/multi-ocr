@@ -45,8 +45,8 @@ python main.py <path> [--model MODEL] [--pages PAGES] [--api-key KEY] [--ollama-
 
 ### 引擎能力矩阵
 
-| 引擎 | `recognize()` (图片识别) | `parse_pdf()` (PDF 直接解析) |
-|------|-------------------------|---------------------------|
+| 引擎 | `parse_image()` (图片识别) | `parse_pdf()` (PDF 直接解析) |
+|------|---------------------------|---------------------------|
 | liteparse | ❌ 不支持 | ✅ 支持 |
 | siliconflow | ✅ 支持 | ❌ 不支持 |
 | dashscope | ✅ 支持 | ❌ 不支持 |
@@ -56,15 +56,15 @@ python main.py <path> [--model MODEL] [--pages PAGES] [--api-key KEY] [--ollama-
 
 | 输入类型 | liteparse | 其他引擎 (siliconflow/dashscope/ollama) |
 |---------|----------|---------------------------------------|
-| 图片 | 转为单页 PDF → `parse_pdf()` | 直接 `recognize()` |
-| PDF | 直接 `parse_pdf()` | 拆为图片 → `recognize()` 逐页识别 |
+| 图片 | 转为单页 PDF → `parse_pdf()` | 直接 `parse_image()` |
+| PDF | 直接 `parse_pdf()` | 拆为图片 → `parse_image()` 逐页识别 |
 
 ### 批量模式下的自动转换
 
 | 输入类型 | liteparse | 其他引擎 (siliconflow/dashscope/ollama) |
 |---------|----------|---------------------------------------|
-| 图片目录 | 合并为 PDF → `parse_pdf()` | 逐张 `recognize()` → 合并输出 |
-| PDF 目录 | 逐文件 `parse_pdf()` | 逐文件拆为图片 → `recognize()` 逐页识别 |
+| 图片目录 | 合并为 PDF → `parse_pdf()` | 逐张 `parse_image()` → 合并输出 |
+| PDF 目录 | 逐文件 `parse_pdf()` | 逐文件拆为图片 → `parse_image()` 逐页识别 |
 
 ## 目录类型检测
 
@@ -124,8 +124,16 @@ python main.py <path> [--model MODEL] [--pages PAGES] [--api-key KEY] [--ollama-
 | 文件 | 改动 |
 |------|------|
 | `main.py` | `input` 改为必填；移除 `-d/--input-dir`；`<path>` 自动判断文件/目录；`--pages` 行为调整 |
-| `batch.py` | `_collect_files` 改为严格互斥检测，混合目录报错；移除混合目录的分发逻辑 |
-| `tests/test_batch.py` | 新增混合目录报错测试；更新对应测试用例 |
+| `batch.py` | `_collect_files` 改为严格互斥检测，混合目录报错；移除混合目录的分发逻辑；`recognize()` → `parse_image()` |
+| `ocr.py` | `recognize()` → `parse_image()` 调用更新 |
+| `engines/base.py` | `recognize()` 重命名为 `parse_image()` |
+| `engines/siliconflow.py` | `recognize()` 重命名为 `parse_image()` |
+| `engines/dashscope.py` | `recognize()` 重命名为 `parse_image()` |
+| `engines/ollama.py` | `recognize()` 重命名为 `parse_image()` |
+| `engines/liteparse.py` | `recognize()` → `parse_image()` 或抛出 NotImplementedError（如有实现） |
+| `tests/test_batch.py` | 新增混合目录报错测试；更新对应测试用例；`recognize()` → `parse_image()` |
+| `tests/test_engines.py` | `recognize()` → `parse_image()` 调用更新 |
+| `tests/test_ocr.py` | `<path>` 未提供 → argparse 报错；单文件图片 + `--pages` → 报错；批量模式 + `--pages` → 警告提示；文件/目录自动判断验证 |
 
 ## 测试
 
