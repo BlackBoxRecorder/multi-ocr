@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "liteparse",
+    "ollama",
     "openai>=2.45.0",
     "pymupdf>=1.28.0",
     "tqdm>=4.67.0",

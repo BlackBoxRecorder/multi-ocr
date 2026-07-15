@@ -1,15 +1,17 @@
 from pathlib import Path
+import tempfile
 
 from liteparse import LiteParse as LiteParseLib
 
 from engines.base import OCREngine
+from pdf_utils import images_to_pdf
 
 
 class LiteParseEngine(OCREngine):
     """LiteParse 本地 PDF 解析引擎。
 
     基于 Rust 实现，无需 API Key、无需联网，直接解析 PDF 并输出 markdown。
-    仅支持 PDF，不支持图片文件。
+    图片通过自动转换为 PDF 后解析来支持。
     """
 
     def __init__(self, model: str = "", api_key: str = "") -> None:
@@ -18,7 +20,14 @@ class LiteParseEngine(OCREngine):
         self._api_key = api_key
 
     def recognize(self, image_path: Path) -> str:
-        raise NotImplementedError("LiteParse 不支持图片识别，仅支持 PDF")
+        """将图片转为 PDF 后解析，返回 markdown 文本。"""
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
+            tmp_pdf = Path(f.name)
+        try:
+            images_to_pdf([image_path], tmp_pdf)
+            return self.parse_pdf(tmp_pdf)
+        finally:
+            tmp_pdf.unlink(missing_ok=True)
 
     def parse_pdf(self, pdf_path: Path, pages: str | None = None) -> str:
         """直接解析 PDF，返回 markdown 文本。

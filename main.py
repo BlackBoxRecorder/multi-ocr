@@ -2,7 +2,8 @@
 
 支持 SiliconFlow（DeepSeek-OCR / PaddleOCR-VL-1.5）、
 DashScope（Qwen-VL-OCR）、
-LiteParse（本地 PDF 解析）多种 OCR 引擎。
+LiteParse（本地 PDF 解析）、
+Ollama（本地 DeepSeek-OCR）多种 OCR 引擎。
 """
 
 import argparse
@@ -31,24 +32,29 @@ MODEL_MAP: dict[str, tuple[str, str, str]] = {
     "dashscope-qwen-ocr": ("dashscope", "qwen3.5-ocr", "DashScope + Qwen-OCR"),
     "dashscope-qwen-vl-ocr": ("dashscope", "qwen-vl-ocr", "DashScope + Qwen-VL-OCR"),
     "liteparse": ("liteparse", "", "LiteParse (本地 PDF 解析)"),
+    "ollama-deepseek-ocr": (
+        "ollama",
+        "deepseek-ocr:latest",
+        "Ollama + DeepSeek-OCR",
+    ),
 }
 
 # provider -> 环境变量名
 _PROVIDER_ENV: dict[str, str] = {
     "siliconflow": "SILICONFLOW_API_KEY",
     "dashscope": "DASHSCOPE_API_KEY",
-    # liteparse 为本地引擎，不需要 API Key
+    # ollama / liteparse 为本地引擎，不需要 API Key
 }
 
 
 def _get_api_key(provider: str, cli_key: str | None) -> str | None:
     """获取 API Key：命令行 > provider 专用环境变量。
-    LiteParse 无需 API Key，返回空字符串。
+    Ollama / LiteParse 无需 API Key，返回空字符串。
     """
     if cli_key:
         return cli_key
-    if provider == "liteparse":
-        return ""  # LiteParse 本地引擎，无需 API Key
+    if provider in ("liteparse", "ollama"):
+        return ""  # 本地引擎，无需 API Key
     env_var = _PROVIDER_ENV[provider]
     return os.environ.get(env_var)
 
@@ -104,6 +110,11 @@ def main() -> None:
         default=None,
         help=_build_api_key_help(),
     )
+    parser.add_argument(
+        "--ollama-url",
+        default=None,
+        help="Ollama 服务地址（默认读取 OLLAMA_BASE_URL 环境变量，都没有则用 http://127.0.0.1:11434）",
+    )
     args = parser.parse_args()
 
     # 校验：input 和 -d 二选一
@@ -125,9 +136,9 @@ def main() -> None:
         sys.exit(1)
     provider, model_name, _desc = entry
 
-    # API Key：命令行 > 环境变量（LiteParse 跳过）
+    # API Key：命令行 > 环境变量（Ollama / LiteParse 跳过）
     api_key = _get_api_key(provider, args.api_key)
-    if not api_key and provider != "liteparse":
+    if not api_key and provider not in ("liteparse", "ollama"):
         env_var = _PROVIDER_ENV.get(provider, "")
         print(
             f"请设置 {env_var} 环境变量或使用 --api-key 参数。",
@@ -135,12 +146,16 @@ def main() -> None:
         )
         sys.exit(1)
 
+    # 获取 Ollama base_url
+    ollama_url = args.ollama_url or os.environ.get("OLLAMA_BASE_URL")
+
     # 获取引擎
     try:
         engine = get_engine(
             provider=provider,
             model=model_name,
             api_key=api_key,
+            base_url=ollama_url,
         )
     except ValueError as e:
         print(f"引擎初始化失败: {e}", file=sys.stderr)

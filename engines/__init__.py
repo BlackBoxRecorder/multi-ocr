@@ -1,5 +1,6 @@
 from engines.base import OCREngine
 from engines.dashscope import DashScopeEngine
+from engines.ollama import OllamaEngine
 from engines.siliconflow import SiliconFlowEngine
 
 # LiteParse 为可选依赖，仅在已安装时注册
@@ -14,6 +15,7 @@ except ImportError:
 # 添加新提供商时只需在此注册
 _registry: dict[str, type[OCREngine]] = {
     "dashscope": DashScopeEngine,
+    "ollama": OllamaEngine,
     "siliconflow": SiliconFlowEngine,
 }
 
@@ -21,13 +23,16 @@ if _HAS_LITEPARSE:
     _registry["liteparse"] = LiteParseEngine
 
 
-def get_engine(provider: str, model: str, api_key: str) -> OCREngine:
+def get_engine(
+    provider: str, model: str, api_key: str, base_url: str | None = None
+) -> OCREngine:
     """工厂函数：按 provider 名查找并实例化 OCR 引擎。
 
     Args:
         provider: OCR 服务提供商名称（如 "siliconflow"）。
         model: 模型名称（如 "deepseek-ai/DeepSeek-OCR"）。
         api_key: API 密钥。
+        base_url: 自定义 API 地址（当前仅 ollama 引擎使用）。
 
     Returns:
         OCREngine 实例。
@@ -39,4 +44,6 @@ def get_engine(provider: str, model: str, api_key: str) -> OCREngine:
     if engine_cls is None:
         available = ", ".join(_registry.keys())
         raise ValueError(f"未知的 OCR 提供商: {provider}，当前可用: {available}")
+    if base_url is not None:
+        return engine_cls(model=model, api_key=api_key, base_url=base_url)
     return engine_cls(model=model, api_key=api_key)

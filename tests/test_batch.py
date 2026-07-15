@@ -27,14 +27,14 @@ class MockRecognizeEngine(OCREngine):
 
 
 class MockParsePdfEngine(OCREngine):
-    """模拟 LiteParse 引擎（支持 parse_pdf，不支持图片）。"""
+    """模拟 LiteParse 引擎（支持 parse_pdf，图片通过转 PDF 支持）。"""
 
     def __init__(self, text: str = "parsed pdf content") -> None:
         self._text = text
         self.parse_calls: list[Path] = []
 
     def recognize(self, image_path: Path) -> str:
-        raise NotImplementedError("不支持图片识别")
+        return f"{self._text} [{image_path.name}]"
 
     def parse_pdf(self, pdf_path: Path, pages: str | None = None) -> str:
         self.parse_calls.append(pdf_path)
@@ -268,11 +268,15 @@ class TestOcrDirectoryErrors:
         with pytest.raises(ValueError, match="没有可处理的"):
             ocr_directory(tmp_path, MockRecognizeEngine())
 
-    def test_mixed_dir_with_liteparse(self, tmp_path: Path) -> None:
+    def test_mixed_dir_with_parse_pdf_engine(self, tmp_path: Path) -> None:
+        """混合目录 + parse_pdf 引擎 → 不再报错，按图片批量处理。"""
         (tmp_path / "img.jpg").touch()
         (tmp_path / "doc.pdf").touch()
-        with pytest.raises(ValueError, match="混合目录"):
-            ocr_directory(tmp_path, MockParsePdfEngine())
+        engine = MockParsePdfEngine()
+        # 不应抛出异常
+        ocr_directory(tmp_path, engine)
+        # 图片批量流程：输出为 tmp_path.md
+        assert tmp_path.with_suffix(".md").exists()
 
 
 class TestOcrDirectoryDispatch:
