@@ -233,9 +233,9 @@ wheels = [
 ]
 
 [[package]]
-name = "multi-ocr"
+name = "multi-ocr-py"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "liteparse" },
     { name = "ollama" },

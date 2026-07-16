@@ -10,14 +10,12 @@
 
 ```bash
 python main.py input.pdf --provider siliconflow --model deepseek-ai/DeepSeek-OCR
-python main.py input.pdf --provider dashscope --model qwen3.5-ocr
 ```
 
 改为缩写后：
 
 ```bash
 python main.py input.pdf --model silicon-deepseek-ocr
-python main.py input.pdf --model dashscope-qwen-ocr
 ```
 
 ## MODEL_MAP 定义
@@ -28,8 +26,6 @@ python main.py input.pdf --model dashscope-qwen-ocr
 MODEL_MAP: dict[str, tuple[str, str, str]] = {
     "silicon-deepseek-ocr":  ("siliconflow", "deepseek-ai/DeepSeek-OCR",       "SiliconFlow + DeepSeek-OCR"),
     "silicon-paddle-ocr":    ("siliconflow", "PaddlePaddle/PaddleOCR-VL-1.5",  "SiliconFlow + PaddleOCR-VL-1.5"),
-    "dashscope-qwen-ocr":    ("dashscope",   "qwen3.5-ocr",                    "DashScope + Qwen-OCR"),
-    "dashscope-qwen-vl-ocr": ("dashscope",   "qwen-vl-ocr",                    "DashScope + Qwen-VL-OCR"),
 }
 ```
 
@@ -64,16 +60,13 @@ DEFAULT_MODEL = "silicon-deepseek-ocr"
                     可用模型:
                       silicon-deepseek-ocr   → SiliconFlow + DeepSeek-OCR
                       silicon-paddle-ocr     → SiliconFlow + PaddleOCR-VL-1.5
-                      dashscope-qwen-ocr     → DashScope + Qwen-OCR
-                      dashscope-qwen-vl-ocr  → DashScope + Qwen-VL-OCR
 ```
 
 `--api-key` 的 help 提示用户根据模型配置对应环境变量：
 
 ```
 --api-key API_KEY   API Key（根据 --model 自动读取对应环境变量：
-                      siliconflow 模型 → SILICONFLOW_API_KEY
-                      dashscope 模型   → DASHSCOPE_API_KEY）
+                        siliconflow 模型 → SILICONFLOW_API_KEY）
 ```
 
 ## 主流程变更（`main.py`）
@@ -106,7 +99,6 @@ ocr_file(...) → 执行 OCR
 | 场景 | 预期 |
 |------|------|
 | `--model silicon-deepseek-ocr` | 正确推导 provider=SiliconFlow，使用 DeepSeek-OCR |
-| `--model dashscope-qwen-ocr` | 正确推导 provider=DashScope，使用 qwen3.5-ocr |
 | `--model invalid-model` | 报错退出，列出所有可用缩写 |
 | 不传 `--model` | 使用默认值 `silicon-deepseek-ocr` |
 | 未设置对应环境变量 | 提示设置对应环境变量（如 SILICONFLOW_API_KEY） |

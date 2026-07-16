@@ -67,7 +67,7 @@ with ThreadPoolExecutor(max_workers=concurrency) as executor:
 
 ### 引擎线程安全
 
-- API 引擎（SiliconFlow、DashScope、Ollama）：HTTP 客户端 `OpenAI` 实例本身是线程安全的，多个线程共享同一引擎实例并发调用 `parse_image()` 没有问题
+- API 引擎（SiliconFlow、Ollama）：HTTP 客户端 `OpenAI` 实例本身是线程安全的，多个线程共享同一引擎实例并发调用 `parse_image()` 没有问题
 - LiteParse：该引擎覆盖了 `parse_pdf()`，不走默认逐页实现，因此不受并发改动影响
 
 ### 特殊情况处理
@@ -117,7 +117,7 @@ python main.py ./images
 | `engines/base.py` | `OCREngine.parse_pdf()` | `concurrency: int = 1` |
 | `main.py` | `main()` | 解析 `-j` 参数并向下传递 |
 
-引擎子类（SiliconFlow、DashScope、Ollama）**无需修改**，仅有 LiteParse 覆盖了 `parse_pdf()` 签名，需补上 `concurrency` 参数以保持兼容（内部忽略该参数）。
+引擎子类（SiliconFlow、Ollama）**无需修改**，仅有 LiteParse 覆盖了 `parse_pdf()` 签名，需补上 `concurrency` 参数以保持兼容（内部忽略该参数）。
 
 ## Testing
 

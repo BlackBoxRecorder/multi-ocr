@@ -20,7 +20,6 @@ multi-ocr/
 │       └── engines/
 │           ├── __init__.py      # 引擎注册表 + get_engine() 工厂
 │           ├── base.py          # OCREngine 抽象基类
-│           ├── dashscope.py     # DashScope 引擎
 │           ├── liteparse.py     # LiteParse 引擎（可选依赖）
 │           ├── ollama.py        # Ollama 引擎
 │           └── siliconflow.py   # SiliconFlow 引擎

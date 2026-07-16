@@ -2,7 +2,6 @@
 
 支持多种 OCR 引擎:
 - SiliconFlow（DeepSeek-OCR / PaddleOCR-VL-1.5）
-- DashScope（Qwen-VL-OCR）
 - LiteParse（本地 PDF 解析）
 - Ollama（本地 DeepSeek-OCR）
 
@@ -37,7 +36,6 @@ MODEL_MAP: dict[str, tuple[str, str, str]] = {
         "PaddlePaddle/PaddleOCR-VL-1.5",
         "SiliconFlow + PaddleOCR-VL-1.5",
     ),
-    "dashscope-qwen-vl-ocr": ("dashscope", "qwen-vl-ocr", "DashScope + Qwen-VL-OCR"),
     "liteparse": ("liteparse", "", "LiteParse (本地 PDF 解析)"),
     "ollama-deepseek-ocr": (
         "ollama",
@@ -49,7 +47,6 @@ MODEL_MAP: dict[str, tuple[str, str, str]] = {
 # provider -> 环境变量名
 _PROVIDER_ENV: dict[str, str] = {
     "siliconflow": "SILICONFLOW_API_KEY",
-    "dashscope": "DASHSCOPE_API_KEY",
     # ollama / liteparse 为本地引擎，不需要 API Key
 }
 

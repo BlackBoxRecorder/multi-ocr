@@ -4,7 +4,7 @@
 
 新增 LiteParse 作为本地 PDF 解析引擎。LiteParse 是一个基于 Rust 的开源文档解析库，Python 包 `liteparse` 可直接调用，无需 API Key、无需联网，能直接解析 PDF 并输出 markdown。
 
-与现有云端引擎（SiliconFlow、DashScope）不同，LiteParse **仅处理 PDF**，不处理图片。同时，本次统一所有引擎的输出格式为 markdown，保存扩展名改为 `.md`。
+与现有云端引擎（如 SiliconFlow）不同，LiteParse **仅处理 PDF**，不处理图片。同时，本次统一所有引擎的输出格式为 markdown，保存扩展名改为 `.md`。
 
 ## 引擎接口扩展
 
@@ -58,7 +58,6 @@ class LiteParseEngine(OCREngine):
 
 ```python
 _registry: dict[str, type[OCREngine]] = {
-    "dashscope": DashScopeEngine,
     "siliconflow": SiliconFlowEngine,
     "liteparse": LiteParseEngine,
 }

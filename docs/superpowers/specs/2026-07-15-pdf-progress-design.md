@@ -6,7 +6,7 @@
 
 ## 背景
 
-当前 `ocr_file()` 对 PDF 逐页调用 OCR API 时没有任何进度提示。批量模式仅有文件级 tqdm，不显示页级进度。三个引擎（SiliconFlow / DashScope / Ollama）各自实现了完全相同的 `parse_pdf()` 逐页迭代逻辑。
+当前 `ocr_file()` 对 PDF 逐页调用 OCR API 时没有任何进度提示。批量模式仅有文件级 tqdm，不显示页级进度。三个引擎（SiliconFlow / Ollama）各自实现了完全相同的 `parse_pdf()` 逐页迭代逻辑。
 
 ## 各模式进度行为
 
@@ -28,7 +28,7 @@
 - 新增 `from typing import Callable`、`import shutil`、`from pdf_utils import split_pdf`
 - 方法体：`split_pdf()` → 逐页 `parse_image()` → 每页调用 `progress_callback()` → 合并结果
 
-### 2. `engines/siliconflow.py` / `dashscope.py` / `ollama.py` — 删除重复代码
+### 2. `engines/siliconflow.py` / `ollama.py` — 删除重复代码
 
 - 删除各自的 `parse_pdf()` 方法（每个约 12 行）
 - 删除不再需要的 `import shutil` 和 `from pdf_utils import split_pdf`

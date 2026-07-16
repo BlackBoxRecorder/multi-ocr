@@ -65,7 +65,7 @@ def _batch_images(
             ):
                 idx = future_to_idx[future]
                 results[idx] = future.result()
-        merged = "\n\n".join(r for r in results if r is not None)
+        merged = engine.merge_results([r for r in results if r is not None])
     else:
         results = []
         for img_path in tqdm(
@@ -73,9 +73,9 @@ def _batch_images(
         ):
             text = engine.parse_image(img_path)
             results.append(text)
-        merged = "\n\n".join(results)
+        merged = engine.merge_results(results)
 
-    output_path = input_dir.with_suffix(".md")
+    output_path = input_dir.with_suffix(engine.output_extension)
     output_path.write_text(merged, encoding="utf-8")
     print(f"已保存: {output_path}")
 

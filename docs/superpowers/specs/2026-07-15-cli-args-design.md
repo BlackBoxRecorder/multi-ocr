@@ -49,19 +49,18 @@ python main.py <path> [--model MODEL] [--pages PAGES] [--api-key KEY] [--ollama-
 |------|---------------------------|---------------------------|
 | liteparse | ❌ 不支持 | ✅ 支持 |
 | siliconflow | ✅ 支持 | ❌ 不支持 |
-| dashscope | ✅ 支持 | ❌ 不支持 |
 | ollama | ✅ 支持 | ❌ 不支持 |
 
 ### 单文件模式下的自动转换
 
-| 输入类型 | liteparse | 其他引擎 (siliconflow/dashscope/ollama) |
+| 输入类型 | liteparse | 其他引擎 (siliconflow/ollama) |
 |---------|----------|---------------------------------------|
 | 图片 | 转为单页 PDF → `parse_pdf()` | 直接 `parse_image()` |
 | PDF | 直接 `parse_pdf()` | 拆为图片 → `parse_image()` 逐页识别 |
 
 ### 批量模式下的自动转换
 
-| 输入类型 | liteparse | 其他引擎 (siliconflow/dashscope/ollama) |
+| 输入类型 | liteparse | 其他引擎 (siliconflow/ollama) |
 |---------|----------|---------------------------------------|
 | 图片目录 | 合并为 PDF → `parse_pdf()` | 逐张 `parse_image()` → 合并输出 |
 | PDF 目录 | 逐文件 `parse_pdf()` | 逐文件拆为图片 → `parse_image()` 逐页识别 |
@@ -128,7 +127,6 @@ python main.py <path> [--model MODEL] [--pages PAGES] [--api-key KEY] [--ollama-
 | `ocr.py` | `recognize()` → `parse_image()` 调用更新 |
 | `engines/base.py` | `recognize()` 重命名为 `parse_image()` |
 | `engines/siliconflow.py` | `recognize()` 重命名为 `parse_image()` |
-| `engines/dashscope.py` | `recognize()` 重命名为 `parse_image()` |
 | `engines/ollama.py` | `recognize()` 重命名为 `parse_image()` |
 | `engines/liteparse.py` | `recognize()` → `parse_image()` 或抛出 NotImplementedError（如有实现） |
 | `tests/test_batch.py` | 新增混合目录报错测试；更新对应测试用例；`recognize()` → `parse_image()` |

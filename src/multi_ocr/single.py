@@ -84,7 +84,7 @@ def ocr_file(
         raise ValueError(f"不支持的文件格式: {input_path.suffix}，支持: {supported}")
 
     # 输出
-    output_path = input_path.with_suffix(".md")
+    output_path = input_path.with_suffix(engine.output_extension)
     output_path.write_text(merged, encoding="utf-8")
     print(f"已保存: {output_path}")
 

@@ -38,7 +38,6 @@ multi-ocr/
 │   ├── __init__.py      # 注册表 + get_engine()
 │   ├── base.py          # OCREngine（parse_image + parse_pdf 均为 abstract）
 │   ├── siliconflow.py   # + parse_pdf
-│   ├── dashscope.py     # + parse_pdf
 │   ├── ollama.py        # + parse_pdf
 │   └── liteparse.py     # 不变
 └── tests/
@@ -66,7 +65,7 @@ class OCREngine(ABC):
 
 ## 各引擎实现
 
-### siliconflow / dashscope / ollama
+### siliconflow / ollama
 
 `parse_image` 不变。`parse_pdf` 统一模式：
 
@@ -197,7 +196,6 @@ def ocr_file(
 |------|----------|
 | `engines/base.py` | 修改 — `parse_pdf` 改为 abstractmethod |
 | `engines/siliconflow.py` | 修改 — 新增 `parse_pdf` |
-| `engines/dashscope.py` | 修改 — 新增 `parse_pdf` |
 | `engines/ollama.py` | 修改 — 新增 `parse_pdf` |
 | `engines/liteparse.py` | 不变 |
 | `pdf_utils.py` | 修改 — 新增 `split_pdf` |

@@ -7,30 +7,32 @@
 
 ## 支持的引擎
 
-| 引擎 | 说明 | 类型 |
-|---|---|---|
-| SiliconFlow + DeepSeek-OCR | 云端 OCR，精度高 | API |
-| SiliconFlow + PaddleOCR-VL-1.5 | 云端 OCR，轻量快速 | API |
-| DashScope + Qwen-VL-OCR | 阿里云百炼 | API |
-| LiteParse | 本地 PDF 解析，无需联网 | 本地 |
-| Ollama + DeepSeek-OCR | 本地部署 OCR | 本地 |
+| 引擎 | 说明 | 类型 | 场景 | 费用 |
+|---|---|---|---|---|
+| SiliconFlow + DeepSeek-OCR | 云端 OCR，精度高 | API | 图片+PDF | 免费 |
+| SiliconFlow + PaddleOCR-VL-1.5 | 云端 OCR，轻量快速 | API | 图片+PDF  | 免费 |
+| LiteParse | 本地 PDF 解析，无需联网 | 本地 | PDF  | 免费 |
+| Ollama + DeepSeek-OCR | 本地部署 OCR | 本地 | 图片+PDF  | 免费 |
+
+
+> 本地运行 ollama 参考：https://ollama.com/library/deepseek-ocr
 
 ## 安装
 
 ### CLI 全局安装
 
 ```bash
-uv tool install multi-ocr
+uv tool install multi-ocr-py
 # 或
-pip install multi-ocr
+pip install multi-ocr-py
 ```
 
 ### SDK 依赖安装
 
 ```bash
-pip install multi-ocr
+pip install multi-ocr-py
 # 或
-uv add multi-ocr
+uv add multi-ocr-py
 ```
 
 ## CLI 使用
@@ -40,13 +42,13 @@ uv add multi-ocr
 multi-ocr document.pdf
 
 # 指定引擎和页码范围
-multi-ocr document.pdf --model dashscope-qwen-vl-ocr --pages 1-5
+multi-ocr document.pdf --model liteparse --pages 1-5
 
-# 批量处理目录
+# 批量处理目录，4个并发
 multi-ocr ./scans/ --model silicon-deepseek-ocr -j 4
 
 # 查看帮助
-multi-ocr --help
+multi-ocr -h
 ```
 
 ### 环境变量
@@ -54,10 +56,8 @@ multi-ocr --help
 | 引擎 | 环境变量 |
 |---|---|
 | SiliconFlow | `SILICONFLOW_API_KEY` |
-| DashScope | `DASHSCOPE_API_KEY` |
 | Ollama | `OLLAMA_BASE_URL`（可选，默认 http://127.0.0.1:11434）|
 
-也可通过 `--api-key` 参数直接传入。
 
 ## SDK 使用
 
