@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from engines.base import OCREngine
+from multi_ocr.engines.base import OCREngine
 
 TESTS_DIR = Path(__file__).parent
 

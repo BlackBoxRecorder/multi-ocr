@@ -19,9 +19,9 @@ import os
 import sys
 from pathlib import Path
 
-from engines import get_engine
-from single import ocr_file
-from batch import ocr_directory
+from multi_ocr.engines import get_engine
+from multi_ocr.single import ocr_file
+from multi_ocr.batch import ocr_directory
 
 DEFAULT_MODEL = "silicon-deepseek-ocr"
 

@@ -6,8 +6,8 @@ from typing import Callable
 
 import pytest
 
-from engines.base import OCREngine
-from single import _is_image, _is_pdf, ocr_file
+from multi_ocr.engines.base import OCREngine
+from multi_ocr.single import _is_image, _is_pdf, ocr_file
 
 
 class MockParsePdfEngine(OCREngine):

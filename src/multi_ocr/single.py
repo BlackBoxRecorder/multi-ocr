@@ -4,8 +4,8 @@ from pathlib import Path
 import fitz
 from tqdm import tqdm
 
-from engines.base import OCREngine
-from pdf_utils import parse_pages
+from multi_ocr.engines.base import OCREngine
+from multi_ocr.pdf_utils import parse_pages
 
 # 支持的图片格式
 _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}

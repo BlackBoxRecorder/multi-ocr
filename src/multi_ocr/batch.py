@@ -9,8 +9,8 @@ from pathlib import Path
 
 from tqdm import tqdm
 
-from engines.base import OCREngine
-from single import ocr_file
+from multi_ocr.engines.base import OCREngine
+from multi_ocr.single import ocr_file
 
 # 支持的图片格式
 _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}

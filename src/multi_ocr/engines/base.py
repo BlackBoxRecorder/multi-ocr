@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Callable
 
-from pdf_utils import split_pdf
+from multi_ocr.pdf_utils import split_pdf
 
 
 class OCREngine(ABC):

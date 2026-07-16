@@ -1,11 +1,11 @@
-from engines.base import OCREngine
-from engines.dashscope import DashScopeEngine
-from engines.ollama import OllamaEngine
-from engines.siliconflow import SiliconFlowEngine
+from multi_ocr.engines.base import OCREngine
+from multi_ocr.engines.dashscope import DashScopeEngine
+from multi_ocr.engines.ollama import OllamaEngine
+from multi_ocr.engines.siliconflow import SiliconFlowEngine
 
 # LiteParse 为可选依赖，仅在已安装时注册
 try:
-    from engines.liteparse import LiteParseEngine
+    from multi_ocr.engines.liteparse import LiteParseEngine
 
     _HAS_LITEPARSE = True
 except ImportError:

@@ -4,8 +4,8 @@ from typing import Callable
 
 from liteparse import LiteParse as LiteParseLib
 
-from engines.base import OCREngine
-from pdf_utils import images_to_pdf
+from multi_ocr.engines.base import OCREngine
+from multi_ocr.pdf_utils import images_to_pdf
 
 
 class LiteParseEngine(OCREngine):

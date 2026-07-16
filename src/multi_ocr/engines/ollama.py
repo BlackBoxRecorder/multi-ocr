@@ -3,7 +3,7 @@ from pathlib import Path
 
 from ollama import Client
 
-from engines.base import OCREngine
+from multi_ocr.engines.base import OCREngine
 
 
 class OllamaEngine(OCREngine):

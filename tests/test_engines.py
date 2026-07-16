@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from engines import _HAS_LITEPARSE, get_engine
+from multi_ocr.engines import _HAS_LITEPARSE, get_engine
 
 
 class TestGetEngine:
@@ -14,7 +14,7 @@ class TestGetEngine:
         engine = get_engine(
             provider="siliconflow", model="test-model", api_key="test-key"
         )
-        from engines.siliconflow import SiliconFlowEngine
+        from multi_ocr.engines.siliconflow import SiliconFlowEngine
 
         assert isinstance(engine, SiliconFlowEngine)
         assert engine._model == "test-model"
@@ -23,7 +23,7 @@ class TestGetEngine:
         engine = get_engine(
             provider="dashscope", model="qwen-vl-ocr", api_key="test-key"
         )
-        from engines.dashscope import DashScopeEngine
+        from multi_ocr.engines.dashscope import DashScopeEngine
 
         assert isinstance(engine, DashScopeEngine)
         assert engine._model == "qwen-vl-ocr"
@@ -35,7 +35,7 @@ class TestGetEngine:
     @pytest.mark.skipif(not _HAS_LITEPARSE, reason="liteparse 未安装")
     def test_known_provider_liteparse(self) -> None:
         engine = get_engine(provider="liteparse", model="", api_key="")
-        from engines.liteparse import LiteParseEngine
+        from multi_ocr.engines.liteparse import LiteParseEngine
 
         assert isinstance(engine, LiteParseEngine)
         assert engine._model == ""
@@ -52,7 +52,7 @@ class TestParsePdfConcurrency:
 
     def test_concurrent_pages_ordered(self, tmp_path: Path) -> None:
         """并发模式下结果按页码顺序排列。"""
-        from engines.base import OCREngine
+        from multi_ocr.engines.base import OCREngine
 
         class TestEngine(OCREngine):
             def parse_image(self, image_path: Path) -> str:
@@ -82,7 +82,7 @@ class TestParsePdfConcurrency:
 
     def test_concurrency_1_same_as_sequential(self, tmp_path: Path) -> None:
         """concurrency=1 结果与串行一致。"""
-        from engines.base import OCREngine
+        from multi_ocr.engines.base import OCREngine
 
         call_order: list[str] = []
 
@@ -108,7 +108,7 @@ class TestParsePdfConcurrency:
 
     def test_single_page_with_high_concurrency(self, tmp_path: Path) -> None:
         """单页 PDF + 高并发数不应报错。"""
-        from engines.base import OCREngine
+        from multi_ocr.engines.base import OCREngine
 
         class TestEngine(OCREngine):
             def parse_image(self, image_path: Path) -> str:

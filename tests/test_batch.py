@@ -4,13 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from batch import (
+from multi_ocr.batch import (
     _batch_images,
     _batch_pdfs,
     _collect_files,
     ocr_directory,
 )
-from engines.base import OCREngine
+from multi_ocr.engines.base import OCREngine
 
 
 class MockRecognizeEngine(OCREngine):
@@ -177,7 +177,7 @@ class TestBatchPdfs:
         import fitz
         from unittest import mock
 
-        from batch import _batch_pdfs as batch_pdfs_fn
+        from multi_ocr.batch import _batch_pdfs as batch_pdfs_fn
 
         pdf_a = tmp_path / "a.pdf"
         doc = fitz.open()
@@ -187,10 +187,10 @@ class TestBatchPdfs:
 
         engine = MockRecognizeEngine()
 
-        with mock.patch("batch.ocr_file") as mock_ocr_file:
+        with mock.patch("multi_ocr.batch.ocr_file") as mock_ocr_file:
             batch_pdfs_fn([pdf_a], engine)
             mock_ocr_file.assert_called_once_with(
-                input_path=pdf_a, engine=engine, pages=None
+                input_path=pdf_a, engine=engine, pages=None, concurrency=1
             )
 
 

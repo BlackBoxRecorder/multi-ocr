@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from pdf_utils import images_to_pdf, parse_pages, pdf_to_images, split_pdf
+from multi_ocr.pdf_utils import images_to_pdf, parse_pages, pdf_to_images, split_pdf
 
 
 class TestParsePages:

@@ -4,21 +4,24 @@ from pathlib import Path
 
 from openai import OpenAI
 
-from engines.base import OCREngine
+from multi_ocr.engines.base import OCREngine
 
 
-class SiliconFlowEngine(OCREngine):
-    """SiliconFlow API OCR 引擎，兼容 OpenAI SDK。
+class DashScopeEngine(OCREngine):
+    """DashScope (阿里云百炼) OCR 引擎，兼容 OpenAI SDK。
 
-    不同模型使用不同的提示词以达到最佳识别效果。
+    支持 Qwen-VL-OCR 模型，通过 OpenAI 兼容接口调用。
+    参考文档：https://help.aliyun.com/zh/model-studio/qwen-ocr
+
+    默认为通用 OCR 场景，如需使用内置任务（高精识别、表格解析、信息抽取等），
+    可参照文档在 prompt 中传入对应指令。
     """
 
-    BASE_URL = "https://api.siliconflow.cn/v1"
+    BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 
     # 模型名称 -> 提示词映射（按前缀匹配）
     _PROMPT_MAP: dict[str, str] = {
-        "deepseek-ai/DeepSeek-OCR": "<image>\nFree OCR. Output in markdown format.",
-        "PaddlePaddle/PaddleOCR-VL-1.5": "OCR this image and output in markdown format.",
+        "qwen-vl-ocr": "OCR this image and output in markdown format.",
     }
 
     _FALLBACK_PROMPT = "OCR this image and output in markdown format."
@@ -53,7 +56,6 @@ class SiliconFlowEngine(OCREngine):
 
         response = self._client.chat.completions.create(
             model=self._model,
-            temperature=0,
             messages=[
                 {
                     "role": "user",
@@ -77,4 +79,7 @@ class SiliconFlowEngine(OCREngine):
         # 清理模型可能输出的特殊标记
         content = re.sub(r"<\|/?ref\|>", "", content)
         content = re.sub(r"<\|/?det\|>", "", content)
+        # 剥离 markdown 代码块包裹（如 ```markdown ... ```）
+        content = re.sub(r"^```(?:markdown)?\s*\n", "", content, count=1)
+        content = re.sub(r"\n```\s*$", "", content)
         return content.strip()
