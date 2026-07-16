@@ -1,6 +1,6 @@
 [project]
 name = "multi-ocr-py"
-version = "0.1.0"
+dynamic = ["version"]
 description = "多引擎 OCR 工具包：将 PDF 和图片转换为 Markdown，支持 CLI 全局安装和 SDK 依赖两种使用方式"
 readme = "README.md"
 license = "MIT"
@@ -41,6 +41,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/multi_ocr"]
+
+[tool.hatch.version]
+path = "src/multi_ocr/__init__.py"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

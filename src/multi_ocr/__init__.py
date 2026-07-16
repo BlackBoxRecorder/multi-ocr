@@ -23,3 +23,5 @@ __all__ = [
     "ocr_file",
     "ocr_directory",
 ]
+
+__version__ = "0.2.0"
