@@ -10,11 +10,6 @@ from multi_ocr.pdf_utils import split_pdf
 class OCREngine(ABC):
     """OCR 引擎抽象基类。所有 OCR 引擎必须实现此接口。"""
 
-    @property
-    def output_extension(self) -> str:
-        """输出文件扩展名，默认 .md，子类可覆写（如 JSON 引擎覆写为 .json）。"""
-        return ".md"
-
     def merge_results(self, results: list[str]) -> str:
         """合并多条返回结果。默认用双换行分隔，JSON 引擎可覆写为数组格式。"""
         return "\n\n".join(results)

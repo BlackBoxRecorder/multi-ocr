@@ -75,7 +75,7 @@ def _batch_images(
             results.append(text)
         merged = engine.merge_results(results)
 
-    output_path = input_dir.with_suffix(engine.output_extension)
+    output_path = input_dir.with_suffix(".md")
     output_path.write_text(merged, encoding="utf-8")
     print(f"已保存: {output_path}")
 
