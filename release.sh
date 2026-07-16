@@ -21,9 +21,9 @@ echo "    新版本: $NEW_VERSION"
 echo "==> 构建包"
 hatch build
 
-# 4. 发布到 PyPI
+# 4. 发布到 PyPI（使用 UV_PUBLISH_TOKEN / UV_PUBLISH_PASSWORD）
 echo "==> 发布到 PyPI"
-hatch publish
+uv publish
 
 # 5. Git 提交 + Tag
 echo "==> Git 提交 & 打标签"
