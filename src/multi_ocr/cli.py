@@ -75,7 +75,7 @@ def _build_model_help() -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="将 PDF 或图片转换为文字。默认使用 SiliconFlow + DeepSeek-OCR。",
+        description="将 PDF 或图片转换为文字。默认使用 liteparse。",
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser.add_argument(
