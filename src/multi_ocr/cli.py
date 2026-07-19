@@ -6,11 +6,15 @@
 - Ollama（本地 DeepSeek-OCR）
 
 用法:
-    python main.py <path> [--model MODEL] [--pages PAGES] [--api-key KEY] [--ollama-url URL]
+    multi-ocr <path> [--model MODEL] [--pages PAGES]
 
     <path> 可以是文件或目录：
     - 文件：单文件模式，自动判断图片/PDF
     - 目录：批量模式，目录下只能有一种类型的文件（全图片或全 PDF）
+
+环境变量:
+    SILICONFLOW_API_KEY    - SiliconFlow 引擎需要的 API Key
+    OLLAMA_BASE_URL        - Ollama 服务地址（默认 http://127.0.0.1:11434）
 """
 
 import argparse
@@ -22,7 +26,7 @@ from multi_ocr.engines import get_engine
 from multi_ocr.single import ocr_file
 from multi_ocr.batch import ocr_directory
 
-DEFAULT_MODEL = "deepseek"
+DEFAULT_MODEL = "liteparse"
 
 # --model 缩写 → (provider, model_name, description)
 MODEL_MAP: dict[str, tuple[str, str, str]] = {
@@ -51,12 +55,10 @@ _PROVIDER_ENV: dict[str, str] = {
 }
 
 
-def _get_api_key(provider: str, cli_key: str | None) -> str | None:
-    """获取 API Key：命令行 > provider 专用环境变量。
+def _get_api_key(provider: str) -> str | None:
+    """获取 API Key：读取 provider 专用环境变量。
     Ollama / LiteParse 无需 API Key，返回空字符串。
     """
-    if cli_key:
-        return cli_key
     if provider in ("liteparse", "ollama"):
         return ""  # 本地引擎，无需 API Key
     env_var = _PROVIDER_ENV[provider]
@@ -68,14 +70,6 @@ def _build_model_help() -> str:
     lines = [f"模型缩写（默认: {DEFAULT_MODEL}）\n可用模型:"]
     for alias, (_prov, _model, desc) in MODEL_MAP.items():
         lines.append(f"  {alias:<25} → {desc}")
-    return "\n".join(lines)
-
-
-def _build_api_key_help() -> str:
-    """动态生成 --api-key 参数的帮助文本。"""
-    lines = ["API Key（根据 --model 自动读取对应环境变量）:"]
-    for provider, env_var in _PROVIDER_ENV.items():
-        lines.append(f"  {provider} 模型 → {env_var}")
     return "\n".join(lines)
 
 
@@ -98,16 +92,6 @@ def main() -> None:
         "--pages",
         default=None,
         help="页码范围，如 1-3,5（仅对单文件 PDF 有效）",
-    )
-    parser.add_argument(
-        "--api-key",
-        default=None,
-        help=_build_api_key_help(),
-    )
-    parser.add_argument(
-        "--ollama-url",
-        default=None,
-        help="Ollama 服务地址（默认读取 OLLAMA_BASE_URL 环境变量，都没有则用 http://127.0.0.1:11434）",
     )
     parser.add_argument(
         "-j",
@@ -145,18 +129,18 @@ def main() -> None:
         sys.exit(1)
     provider, model_name, _desc = entry
 
-    # API Key：命令行 > 环境变量（Ollama / LiteParse 跳过）
-    api_key = _get_api_key(provider, args.api_key)
+    # API Key：从环境变量读取（Ollama / LiteParse 跳过）
+    api_key = _get_api_key(provider)
     if not api_key and provider not in ("liteparse", "ollama"):
         env_var = _PROVIDER_ENV.get(provider, "")
         print(
-            f"请设置 {env_var} 环境变量或使用 --api-key 参数。",
+            f"请设置 {env_var} 环境变量。",
             file=sys.stderr,
         )
         sys.exit(1)
 
     # 获取 Ollama base_url（仅 ollama 引擎使用）
-    ollama_url = args.ollama_url or os.environ.get("OLLAMA_BASE_URL")
+    ollama_url = os.environ.get("OLLAMA_BASE_URL")
 
     # 并发数
     concurrency: int = args.concurrency
