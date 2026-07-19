@@ -80,7 +80,9 @@ def main() -> None:
     )
     parser.add_argument(
         "input",
+        nargs="?",
         type=Path,
+        default=None,
         help="输入文件路径（PDF 或图片）或目录路径（批量处理）",
     )
     parser.add_argument(
@@ -101,6 +103,11 @@ def main() -> None:
         help="并发数量（默认: 1，即串行处理）",
     )
     args = parser.parse_args()
+
+    # 没有提供参数时显示帮助信息
+    if args.input is None:
+        parser.print_help()
+        sys.exit(0)
 
     input_path: Path = args.input
 
