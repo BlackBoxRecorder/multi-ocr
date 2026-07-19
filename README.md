@@ -45,7 +45,7 @@ multi-ocr document.pdf
 multi-ocr document.pdf --model liteparse --pages 1-5
 
 # 批量处理目录，4个并发
-multi-ocr ./scans/ --model silicon-deepseek-ocr -j 4
+multi-ocr ./scans/ --model deepseek -j 4
 
 # 查看帮助
 multi-ocr -h

@@ -22,22 +22,22 @@ from multi_ocr.engines import get_engine
 from multi_ocr.single import ocr_file
 from multi_ocr.batch import ocr_directory
 
-DEFAULT_MODEL = "silicon-deepseek-ocr"
+DEFAULT_MODEL = "deepseek"
 
 # --model 缩写 → (provider, model_name, description)
 MODEL_MAP: dict[str, tuple[str, str, str]] = {
-    "silicon-deepseek-ocr": (
+    "deepseek": (
         "siliconflow",
         "deepseek-ai/DeepSeek-OCR",
         "SiliconFlow + DeepSeek-OCR",
     ),
-    "silicon-paddle-ocr": (
+    "paddle": (
         "siliconflow",
         "PaddlePaddle/PaddleOCR-VL-1.5",
         "SiliconFlow + PaddleOCR-VL-1.5",
     ),
     "liteparse": ("liteparse", "", "LiteParse (本地 PDF 解析)"),
-    "ollama-deepseek-ocr": (
+    "ollama": (
         "ollama",
         "deepseek-ocr:latest",
         "Ollama + DeepSeek-OCR",
